@@ -6,7 +6,7 @@ namespace BlogApi.Models.DTO;
 public class CommunityDto
 {
     [Required]
-    public string Id { get; set; }
+    public Guid Id { get; set; }
     
     [Required]
     public DateTime CreateTime { get; set; }
