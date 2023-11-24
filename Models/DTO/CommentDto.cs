@@ -18,7 +18,7 @@ public class CommentDto
     public DateTime? DeleteDate { get; set; }
     
     [Required]
-    public string AuthorId { get; set; }
+    public Guid AuthorId { get; set; }
     
     [Required]
     [MinLength(1)]
