@@ -11,4 +11,6 @@ public class User
     public Gender Gender { get; set; }
     public string PhoneNumber { get; set; }
     public string Email { get; set; }
+    
+    public List<Comment> Comments { get; set; }
 }
