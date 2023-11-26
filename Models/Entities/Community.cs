@@ -24,4 +24,6 @@ public class Community(List<User> administrators, List<Post> posts)
     
     public List<User> Administrators = administrators;
     public List<Post> Posts = posts;
+
+    public ICollection<User> Subscribers { get; set; }
 }

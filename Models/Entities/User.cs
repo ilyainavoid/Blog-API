@@ -32,4 +32,6 @@ public class User(List<Post> posts)
     public List<Comment> Comments { get; set; }
     public List<Like> Likes { get; set; }
     public List<Post> Posts = posts;
+
+    public ICollection<Community> Subscriptions { get; set; }
 }

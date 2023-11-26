@@ -47,4 +47,6 @@ public class Post
 
     public List<Like> Likes = new List<Like>();
     public List<Comment> Comments = new List<Comment>();
+
+    public ICollection<Tag> Tags { get; set; }
 }

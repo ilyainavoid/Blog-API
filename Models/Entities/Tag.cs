@@ -13,4 +13,6 @@ public class Tag
     [Required]
     [MinLength(1)]
     public string Name { get; set; }
+
+    public ICollection<Post> Posts { get; set; }
 }
