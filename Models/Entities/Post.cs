@@ -45,8 +45,8 @@ public class Post
     [Required]
     public int CommentsCount { get; set; } = 0;
 
-    public List<Like> Likes = new List<Like>();
-    public List<Comment> Comments = new List<Comment>();
+    public List<Like> Likes { get; set; } = new List<Like>();
+    public List<Comment> Comments { get; set; } = new List<Comment>();
 
-    public ICollection<Tag> Tags { get; set; }
+    public List<Tag> Tags { get; set; }
 }

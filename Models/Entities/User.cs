@@ -3,7 +3,7 @@ using BlogApi.Models.Enums;
 
 namespace BlogApi.Models.Entities;
 
-public class User(List<Post> posts)
+public class User()
 {
     [Required]
     public Guid Id { get; set; }
@@ -31,7 +31,8 @@ public class User(List<Post> posts)
     
     public List<Comment> Comments { get; set; }
     public List<Like> Likes { get; set; }
-    public List<Post> Posts = posts;
+    public List<Post> Posts {get; set; }
 
-    public ICollection<Community> Subscriptions { get; set; }
+    public List<CommunitySubscriber> Subscriptions { get; set; }
+    public List<CommunityAdministrator> ManagedCommunities { get; set; }
 }

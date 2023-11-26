@@ -1,8 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.Extensions.Hosting;
+using System.ComponentModel.DataAnnotations;
 
 namespace BlogApi.Models.Entities;
 
-public class Community(List<User> administrators, List<Post> posts)
+public class Community()
 {
     [Required]
     public Guid Id { get; set; }
@@ -21,9 +22,9 @@ public class Community(List<User> administrators, List<Post> posts)
 
     [Required] 
     public int SubscribersCount { get; set; } = 0;
-    
-    public List<User> Administrators = administrators;
-    public List<Post> Posts = posts;
 
-    public ICollection<User> Subscribers { get; set; }
+
+    public List<CommunityAdministrator> Administrators { get; set; }
+    public List<Post> Posts { get; set; }
+    public List<CommunitySubscriber> Subscribers { get; set; }
 }

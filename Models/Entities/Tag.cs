@@ -14,5 +14,5 @@ public class Tag
     [MinLength(1)]
     public string Name { get; set; }
 
-    public ICollection<Post> Posts { get; set; }
+    public List<Post> Posts { get; set; }
 }
