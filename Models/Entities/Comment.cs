@@ -1,4 +1,6 @@
-﻿namespace BlogApi.Models.Entities;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace BlogApi.Models.Entities;
 
 public class Comment
 {
@@ -13,5 +15,6 @@ public class Comment
     
     public Guid? ParentCommentId { get; set; }
     
+    [NotMapped]
     public List<Comment> ChildComments { get; set; }
 }

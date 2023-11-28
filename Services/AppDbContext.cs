@@ -27,18 +27,6 @@ public class AppDbContext : DbContext
             .IsRequired()
             .HasForeignKey(c => c.AuthorId);
 
-        modelBuilder.Entity<User>()
-            .HasMany(u => u.Likes)
-            .WithOne()
-            .IsRequired()
-            .HasForeignKey(l => l.AuthorId);
-
-        modelBuilder.Entity<Comment>()
-            .HasMany(c => c.ChildComments)
-            .WithOne(c => c.ParentComment)
-            .IsRequired()
-            .HasForeignKey(c => c.ParentCommentId);
-
         modelBuilder.Entity<CommunitySubscriber>()
             .HasKey(cs => new { cs.UserId, cs.CommunityId });
 

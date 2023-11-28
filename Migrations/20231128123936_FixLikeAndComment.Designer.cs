@@ -3,6 +3,7 @@ using System;
 using BlogApi.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BlogApi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231128123936_FixLikeAndComment")]
+    partial class FixLikeAndComment
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -34,6 +37,9 @@ namespace BlogApi.Migrations
                     b.Property<string>("AuthorName")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<Guid?>("CommentId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Content")
                         .IsRequired()
@@ -60,6 +66,8 @@ namespace BlogApi.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AuthorId");
+
+                    b.HasIndex("CommentId");
 
                     b.HasIndex("PostId");
 
@@ -277,6 +285,10 @@ namespace BlogApi.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("BlogApi.Models.Entities.Comment", null)
+                        .WithMany("ChildComments")
+                        .HasForeignKey("CommentId");
+
                     b.HasOne("BlogApi.Models.Entities.Post", null)
                         .WithMany("Comments")
                         .HasForeignKey("PostId");
@@ -365,6 +377,11 @@ namespace BlogApi.Migrations
                         .HasForeignKey("TagsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("BlogApi.Models.Entities.Comment", b =>
+                {
+                    b.Navigation("ChildComments");
                 });
 
             modelBuilder.Entity("BlogApi.Models.Entities.Community", b =>
