@@ -17,7 +17,7 @@ namespace BlogApi
         public string GenerateToken(User user)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes("7sFbGh#2L!p@WmJqNt&v3y$B");
+            var key = Encoding.UTF8.GetBytes("7sFbGh#2L!p@WmJqNt&v3y$Bdasf89@fasda9");
             var tokenDescriptor = new SecurityTokenDescriptor()
             {
                 NotBefore = DateTime.UtcNow,
