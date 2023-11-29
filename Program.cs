@@ -1,5 +1,6 @@
 using System.Text;
 using BlogApi.Models.Entities;
+using BlogApi.Profiles;
 using BlogApi.Repositories;
 using BlogApi.Repositories.Interfaces;
 using BlogApi.Services;
@@ -48,6 +49,8 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+builder.Services.AddAutoMapper(typeof(UserProfile));
 
 var app = builder.Build();
 
