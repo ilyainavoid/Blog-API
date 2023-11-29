@@ -6,7 +6,7 @@ public interface IUserService
 {
     Task<TokenResponse> Register(UserRegisterModel userRegisterModel);
     Task<TokenResponse> Login(LoginCredentials credentials);
-    Task<Response> Logout(string token);
-    Task<UserDto> GetProfileInfo(Guid id);
-    Task EditProfileInfo(Guid id, UserEditModel userEditModel);
+    //Task<Response> Logout(string token);
+    //Task<UserDto> GetProfileInfo(Guid id);
+    //Task EditProfileInfo(Guid id, UserEditModel userEditModel);
 }
