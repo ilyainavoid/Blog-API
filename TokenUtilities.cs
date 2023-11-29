@@ -12,7 +12,7 @@ namespace BlogApi
         string GenerateToken(User user);
     }
 
-    public class TokenHandler : ITokenHandler
+    public class TokenUtilities : ITokenHandler
     {
         public string GenerateToken(User user)
         {
