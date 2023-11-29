@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using BlogApi.Migrations;
 using BlogApi.Models.DTO;
 using BlogApi.Models.Entities;
 using BlogApi.Repositories;
@@ -10,13 +11,15 @@ namespace BlogApi.Services
     {
         private readonly TokenUtilities _tokenUtility;
         private readonly IUserRepository _userRepository;
+        private readonly IBaseRepository<ExpiredToken> _expTokenRepository;
         private readonly IMapper _mapper;
 
-        public UserService(TokenUtilities tokenUtility, IUserRepository userRepository, IMapper mapper, ILogger<UserService> logger)
+        public UserService(TokenUtilities tokenUtility, IUserRepository userRepository, IMapper mapper, IBaseRepository<ExpiredToken> expTokenRepository)
         {
             _tokenUtility = tokenUtility;
             _userRepository = userRepository;
             _mapper = mapper;
+            _expTokenRepository = expTokenRepository;
         }
 
         public async Task<TokenResponse> Register(UserRegisterModel userRegisterModel)
@@ -61,6 +64,26 @@ namespace BlogApi.Services
 
             var token = _tokenUtility.GenerateToken(user);
             return new TokenResponse(token);
+        }
+
+        public async Task Logout(string token)
+        {
+            var expiredToken = new ExpiredToken
+            {
+                Token = token
+            };
+            
+            await _expTokenRepository.Insert(expiredToken);
+        }
+
+        public async Task<UserDto> GetProfileInfo(Guid id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task EditProfileInfo(Guid id, UserEditModel userEditModel)
+        {
+            throw new NotImplementedException();
         }
     }
 }
