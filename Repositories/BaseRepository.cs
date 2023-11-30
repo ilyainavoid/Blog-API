@@ -14,14 +14,14 @@ public class BaseRepository<T> : IBaseRepository<T> where T : class
         _context = context;
     }
 
-    public T? Get(Guid id)
+    public async Task<T?> Get(Guid id)
     {
-        return _context.Set<T>().Find(id);
+        return await _context.Set<T>().FindAsync(id);
     }
 
-    public List<T> GetAll()
+    public async Task<List<T>> GetAll()
     {
-        return _context.Set<T>().ToList();
+        return await _context.Set<T>().ToListAsync();
     }
 
     public IEnumerable<T> GetSpecified(Expression<Func<T, bool>> expression)

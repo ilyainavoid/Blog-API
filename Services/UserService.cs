@@ -78,12 +78,24 @@ namespace BlogApi.Services
 
         public async Task<UserDto> GetProfileInfo(Guid id)
         {
-            throw new NotImplementedException();
+            var user = await _userRepository.Get(id);
+            if (user == null)
+            {
+                throw new Exception("Пользователь не найден");
+            }
+            var response = _mapper.Map<UserDto>(user);
+            return response;
         }
 
         public async Task EditProfileInfo(Guid id, UserEditModel userEditModel)
         {
-            throw new NotImplementedException();
+            var user = await _userRepository.Get(id);
+            if (user == null)
+            {
+                throw new Exception("Пользователь не найден");
+            }
+            var editedUser = _mapper.Map(userEditModel, user);
+            await _userRepository.Update(editedUser);
         }
     }
 }

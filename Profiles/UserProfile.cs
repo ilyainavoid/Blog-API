@@ -10,6 +10,8 @@ namespace BlogApi.Profiles
         public UserProfile()
         {
             CreateMap<UserRegisterModel, User>();
+            CreateMap<UserDto, User>();
+            CreateMap<UserEditModel, User>();
         }
     }
 }
