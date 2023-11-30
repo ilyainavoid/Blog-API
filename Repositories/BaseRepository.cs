@@ -14,14 +14,14 @@ public class BaseRepository<T> : IBaseRepository<T> where T : class
         _context = context;
     }
 
-    public T? Get(Guid id)
+    public async Task<T?> Get(Guid id)
     {
-        return _context.Set<T>().Find(id);
+        return await _context.Set<T>().FindAsync(id);
     }
 
-    public List<T> GetAll()
+    public async Task<List<T>> GetAll()
     {
-        return _context.Set<T>().ToList();
+        return await _context.Set<T>().ToListAsync();
     }
 
     public IEnumerable<T> GetSpecified(Expression<Func<T, bool>> expression)
@@ -32,30 +32,30 @@ public class BaseRepository<T> : IBaseRepository<T> where T : class
     public async Task Insert(T entity)
     {
         await _context.Set<T>().AddAsync(entity);
-        await _context.SaveChangesAsync();
     }
 
-    public async Task Delete(T entity)
+    public void Delete(T entity)
     {
         _context.Set<T>().Remove(entity);
-        await _context.SaveChangesAsync();
     }
 
-    public async Task Update(T entity)
+    public void Update(T entity)
     {
         _context.Set<T>().Update(entity);
-        await _context.SaveChangesAsync();
     }
 
     public async Task InsertCollection(List<T> entities)
     {
         await _context.Set<T>().AddRangeAsync(entities);
-        await _context.SaveChangesAsync();
     }
 
-    public async Task DeleteCollection(List<T> entities)
+    public void DeleteCollection(List<T> entities)
     {
         _context.Set<T>().RemoveRange(entities);
+    }
+
+    public async Task SaveChanges()
+    {
         await _context.SaveChangesAsync();
     }
 }

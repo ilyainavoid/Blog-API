@@ -3,6 +3,7 @@ using System;
 using BlogApi.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BlogApi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231129094509_ExpiredTokens")]
+    partial class ExpiredTokens
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -125,10 +128,22 @@ namespace BlogApi.Migrations
 
             modelBuilder.Entity("BlogApi.Models.Entities.ExpiredToken", b =>
                 {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
                     b.Property<string>("Token")
+                        .IsRequired()
                         .HasColumnType("text");
 
-                    b.HasKey("Token");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("ExpiredTokens");
                 });
@@ -326,6 +341,17 @@ namespace BlogApi.Migrations
                         .IsRequired();
 
                     b.Navigation("Community");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BlogApi.Models.Entities.ExpiredToken", b =>
+                {
+                    b.HasOne("BlogApi.Models.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });

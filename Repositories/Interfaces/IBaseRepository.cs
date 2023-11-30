@@ -4,12 +4,13 @@ namespace BlogApi.Repositories.Interfaces;
 
 public interface IBaseRepository<T>
 {
-    T? Get(Guid id);
-    List<T> GetAll();
+    Task<T?> Get(Guid id);
+    Task<List<T>> GetAll();
     IEnumerable<T> GetSpecified(Expression<Func<T, bool>> expression);
     Task Insert(T entity);
-    Task Delete(T entity);
-    Task Update(T entity);
+    void Delete(T entity);
+    void Update(T entity);
     Task InsertCollection(List<T> entities);
-    Task DeleteCollection(List<T> entities);
+    void DeleteCollection(List<T> entities);
+    Task SaveChanges();
 }

@@ -1,4 +1,5 @@
-﻿using BlogApi.Models.Entities;
+﻿using BlogApi.Migrations;
+using BlogApi.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace BlogApi.Services;
@@ -10,6 +11,7 @@ public class AppDbContext : DbContext
     public DbSet<Community> Community { get; set; }
     public DbSet<Tag> Tags { get; set; }
     public DbSet<Comment> Comments { get; set; }
+    public DbSet<ExpiredToken> ExpiredTokens { get; set; }
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
