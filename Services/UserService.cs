@@ -72,8 +72,9 @@ namespace BlogApi.Services
             {
                 Token = token
             };
-            
+
             await _expTokenRepository.Insert(expiredToken);
+            await _expTokenRepository.SaveChanges();
         }
 
         public async Task<UserDto> GetProfileInfo(Guid id)
@@ -95,7 +96,7 @@ namespace BlogApi.Services
                 throw new Exception("Пользователь не найден");
             }
             var editedUser = _mapper.Map(userEditModel, user);
-            await _userRepository.Update(editedUser);
+            _userRepository.Update(editedUser);
         }
     }
 }
