@@ -8,8 +8,9 @@ public interface IBaseRepository<T>
     Task<List<T>> GetAll();
     IEnumerable<T> GetSpecified(Expression<Func<T, bool>> expression);
     Task Insert(T entity);
-    Task Delete(T entity);
-    Task Update(T entity);
+    void Delete(T entity);
+    void Update(T entity);
     Task InsertCollection(List<T> entities);
-    Task DeleteCollection(List<T> entities);
+    void DeleteCollection(List<T> entities);
+    Task SaveChanges();
 }
