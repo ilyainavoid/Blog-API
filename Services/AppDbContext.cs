@@ -17,8 +17,6 @@ public class AppDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<ExpiredToken>().HasNoKey();
-
         modelBuilder.Entity<User>()
             .HasMany(u => u.Posts)
             .WithOne()
