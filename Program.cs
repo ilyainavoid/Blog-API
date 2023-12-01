@@ -5,6 +5,7 @@ using BlogApi.Profiles;
 using BlogApi.Repositories;
 using BlogApi.Repositories.Interfaces;
 using BlogApi.Services;
+using BlogApi.Services.Communities;
 using BlogApi.Services.DbContexts;
 using BlogApi.Services.Tags;
 using BlogApi.Services.Users;
@@ -57,9 +58,11 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 builder.Services.AddAutoMapper(typeof(UserProfile));
 builder.Services.AddAutoMapper(typeof(TagProfile));
+builder.Services.AddAutoMapper(typeof(CommunityProfile));
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITagService, TagService>();
+builder.Services.AddScoped<ICommunityService, CommunityService>();
 
 var app = builder.Build();
 
