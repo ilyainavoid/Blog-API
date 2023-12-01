@@ -1,8 +1,9 @@
-﻿using BlogApi.Models.Entities;
+﻿using BlogApi.Models.DTO;
+using BlogApi.Models.Entities;
 
 namespace BlogApi.Services;
 
 public interface ITagService
 {
-    Task<List<Tag>> GetAllTags();
+    Task<List<TagDto>> GetAllTags();
 }
