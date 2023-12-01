@@ -4,8 +4,9 @@ using BlogApi.Models.DTO;
 using BlogApi.Models.Entities;
 using BlogApi.Repositories;
 using BlogApi.Repositories.Interfaces;
+using BlogApi.Utilities;
 
-namespace BlogApi.Services
+namespace BlogApi.Services.Users
 {
     public class UserService : IUserService
     {
@@ -37,6 +38,7 @@ namespace BlogApi.Services
 
             var newUser = _mapper.Map<User>(userRegisterModel);
             await _userRepository.Insert(newUser);
+            await _userRepository.SaveChanges();
 
             LoginCredentials loginCredentials = new LoginCredentials
             {
@@ -97,6 +99,7 @@ namespace BlogApi.Services
             }
             var editedUser = _mapper.Map(userEditModel, user);
             _userRepository.Update(editedUser);
+            await _userRepository.SaveChanges();
         }
     }
 }

@@ -1,8 +1,7 @@
-﻿using BlogApi.Migrations;
-using BlogApi.Models.Entities;
+﻿using BlogApi.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace BlogApi.Services;
+namespace BlogApi.Services.DbContexts;
 
 public class AppDbContext : DbContext
 {

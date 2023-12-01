@@ -5,7 +5,7 @@ using BlogApi.Models.DTO;
 using BlogApi.Models.Entities;
 using Microsoft.IdentityModel.Tokens;
 
-namespace BlogApi
+namespace BlogApi.Utilities
 {
     public interface ITokenHandler
     {

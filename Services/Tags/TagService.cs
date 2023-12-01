@@ -1,11 +1,10 @@
 ﻿using AutoMapper;
 using BlogApi.Models.DTO;
 using BlogApi.Models.Entities;
-using BlogApi.Profiles;
-using BlogApi.Repositories;
 using BlogApi.Repositories.Interfaces;
+using BlogApi.Services.Tags;
 
-namespace BlogApi.Services;
+namespace BlogApi.Services.Tags;
 
 public class TagService : ITagService
 {

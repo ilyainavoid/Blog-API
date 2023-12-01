@@ -1,5 +1,5 @@
 ﻿using BlogApi.Models.DTO;
-using BlogApi.Services;
+using BlogApi.Services.Tags;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BlogApi.Controllers;

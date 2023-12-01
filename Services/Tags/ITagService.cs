@@ -1,7 +1,6 @@
 ﻿using BlogApi.Models.DTO;
-using BlogApi.Models.Entities;
 
-namespace BlogApi.Services;
+namespace BlogApi.Services.Tags;
 
 public interface ITagService
 {
