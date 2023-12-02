@@ -3,6 +3,8 @@ using BlogApi.Models.DTO;
 using BlogApi.Models.Entities;
 using BlogApi.Models.Enums;
 using BlogApi.Repositories.Interfaces;
+using BlogApi.Services.DbContexts;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 
 namespace BlogApi.Services.Communities;
@@ -11,11 +13,13 @@ public class CommunityService : ICommunityService
 {
     private readonly IBaseRepository<Community> _communityRepository;
     private readonly IMapper _mapper;
+    private readonly AppDbContext _context;
 
-    public CommunityService(IBaseRepository<Community> communityRepository, IMapper mapper)
+    public CommunityService(IBaseRepository<Community> communityRepository, AppDbContext context, IMapper mapper)
     {
         _communityRepository = communityRepository;
         _mapper = mapper;
+        _context = context;
     }
 
     public async Task<List<CommunityDto>> GetAllCommunities()
@@ -25,9 +29,14 @@ public class CommunityService : ICommunityService
         return communitiesDto;
     }
 
-    public Task<List<CommunityUserDto>> GetAllMyCommunities()
+    public async Task<List<CommunityUserDto>> GetAllMyCommunities(Guid userId)
     {
-        throw new NotImplementedException();
+        var managedGroups = await _context.CommunitiesAdministrators.Where(admin => admin.UserId == userId).ToListAsync();
+        var resultAsAdmin = _mapper.Map<List<CommunityUserDto>>(managedGroups);
+        var subscriptions = await _context.CommunitiesSubscribers.Where(subscriber => subscriber.UserId == userId).ToListAsync();
+        var resultAsSubscriber = _mapper.Map <List<CommunityUserDto>>(subscriptions);
+        var result = resultAsAdmin.Concat<CommunityUserDto>(resultAsSubscriber).ToList();
+        return result;
     }
 
     public Task<List<CommunityFullDto>> GetCommunityInfo(Guid communityId)
