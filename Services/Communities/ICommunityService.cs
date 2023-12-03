@@ -8,7 +8,7 @@ public interface ICommunityService
 {
     Task<List<CommunityDto>> GetAllCommunities();
     Task<List<CommunityUserDto>> GetAllMyCommunities(Guid userId);
-    Task<List<CommunityFullDto>> GetCommunityInfo(Guid communityId);
+    Task<CommunityFullDto> GetCommunityInfo(Guid communityId);
     Task<List<PostPagedListDto>> GetCommunityPosts(Guid communityId, List<Tag> tags, PostSorting sorting, int page, int size);
     Task<Guid> CreatePostInCommunity(Guid communityId);
     Task<CommunityRole> GetCommunityRole(Guid communityId);

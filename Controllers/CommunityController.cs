@@ -1,4 +1,5 @@
 ﻿using BlogApi.Models.DTO;
+using BlogApi.Models.Entities;
 using BlogApi.Services.Communities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -52,5 +53,18 @@ public class CommunityController : ControllerBase
             }
         }
         return Ok(response);
+    }
+    
+    [HttpGet("{id}")]
+    public async Task<ActionResult<CommunityFullDto>> GetCommunityInfo(Guid id)
+    {
+        try
+        {
+            var response = await _communityService.GetCommunityInfo(id);
+            return Ok(response);
+        }
+        catch (Exception ex) {
+            return StatusCode(500, "Went wrong");
+        }
     }
 }

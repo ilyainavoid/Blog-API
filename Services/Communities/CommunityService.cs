@@ -39,9 +39,26 @@ public class CommunityService : ICommunityService
         return result;
     }
 
-    public Task<List<CommunityFullDto>> GetCommunityInfo(Guid communityId)
+    public async Task<CommunityFullDto> GetCommunityInfo(Guid communityId)
     {
-        throw new NotImplementedException();
+        var communityInfo = await _communityRepository.Get(communityId);
+        var result = _mapper.Map<CommunityFullDto>(communityInfo);
+        var communityAdmins = await _context.CommunitiesAdministrators
+            .Where(community => community.CommunityId == communityId)
+            .ToListAsync();
+        
+        var adminsInfo = await _context.CommunitiesAdministrators
+            .Where(community => community.CommunityId == communityId)
+            .Select(admin => admin.UserId)
+            .ToListAsync();
+
+        var users = await _context.Users
+            .Where(user => adminsInfo.Contains(user.Id))
+            .ToListAsync();
+
+        var adminsDto = _mapper.Map<List<UserDto>>(users);
+        result.Administrators = adminsDto;
+        return result;
     }
 
     public Task<List<PostPagedListDto>> GetCommunityPosts(Guid communityId, List<Tag> tags, PostSorting sorting, int page, int size)

@@ -9,6 +9,7 @@ public class CommunityProfile : Profile
     public CommunityProfile()
     {
         CreateMap<Community, CommunityDto>();
+        CreateMap<Community, CommunityFullDto>();
         CreateMap<CommunitySubscriber, CommunityUserDto>()
             .ForMember(dest => dest.Role, opt => opt.MapFrom(src => 1));
         CreateMap<CommunityAdministrator, CommunityUserDto>()
