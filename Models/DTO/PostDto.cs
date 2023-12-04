@@ -37,7 +37,7 @@ public class PostDto
     public Guid? AddressId { get; set; }
 
     [Required] 
-    public int Likes { get; set; } = 0;
+    public int LikesAmount { get; set; } = 0;
 
     [Required] 
     public bool HasLike { get; set; } = false;

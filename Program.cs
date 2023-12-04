@@ -59,6 +59,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddAutoMapper(typeof(UserProfile));
 builder.Services.AddAutoMapper(typeof(TagProfile));
 builder.Services.AddAutoMapper(typeof(CommunityProfile));
+builder.Services.AddAutoMapper(typeof(PostProfile));
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITagService, TagService>();
