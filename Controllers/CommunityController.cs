@@ -1,5 +1,6 @@
 ﻿using BlogApi.Models.DTO;
 using BlogApi.Models.Entities;
+using BlogApi.Models.Enums;
 using BlogApi.Services.Communities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -65,6 +66,24 @@ public class CommunityController : ControllerBase
         }
         catch (Exception ex) {
             return StatusCode(500, "Went wrong");
+        }
+    }
+
+    [HttpGet("{id}/post")]
+    public async Task<ActionResult<PostPagedListDto>> GetCommunityPosts(Guid id, [FromQuery] QueryParameters parameters)
+    {
+        var tagIds = parameters.Tags;
+        var sorting = parameters.Sorting;
+        var page = parameters.CurrentPage;
+        var size = parameters.PageSize;
+        try
+        {
+            var response = await _communityService.GetCommunityPosts(id, tagIds, sorting, page, size);
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex);
         }
     }
 }

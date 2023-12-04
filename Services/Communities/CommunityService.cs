@@ -61,9 +61,64 @@ public class CommunityService : ICommunityService
         return result;
     }
 
-    public Task<List<PostPagedListDto>> GetCommunityPosts(Guid communityId, List<Tag> tags, PostSorting sorting, int page, int size)
+    public async Task<PostPagedListDto> GetCommunityPosts(Guid communityId, List<Guid>? tagIds, PostSorting? sorting, int page, int size)
     {
-        throw new NotImplementedException();
+        var result = new PostPagedListDto();
+        var posts = new List<Post>();
+
+        switch (sorting)
+        {
+            case PostSorting.CreateAsc:
+                posts = await _context.Posts
+                    .Where(post => post.CommunityId == communityId)
+                    .Include(post => post.Tags)
+                    .OrderBy(post => post.CreateTime)
+                    .ToListAsync();
+                break;
+            
+            case PostSorting.CreateDesc:
+                posts = await _context.Posts
+                    .Where(post => post.CommunityId == communityId)
+                    .Include(post => post.Tags)
+                    .OrderByDescending(post => post.CreateTime)
+                    .ToListAsync();
+                break;
+            
+            case PostSorting.LikeAsc:
+                posts = await _context.Posts
+                    .Where(post => post.CommunityId == communityId)
+                    .Include(post => post.Tags)
+                    .OrderBy(post => post.LikesAmount)
+                    .ToListAsync();
+                break;
+            
+            case PostSorting.LikeDesc:
+                posts = await _context.Posts
+                    .Where(post => post.CommunityId == communityId)
+                    .Include(post => post.Tags)
+                    .OrderByDescending(post => post.LikesAmount)
+                    .ToListAsync();
+                break;
+            
+
+            default:
+                posts = await _context.Posts
+                    .Where(post => post.CommunityId == communityId)
+                    .Include(post => post.Tags)
+                    .ToListAsync();
+                break;
+        }
+
+        if (tagIds != null)
+        {
+            posts = posts.Where(p => p.Tags.Any(tag => tagIds.Contains(tag.Id))).ToList();
+        }
+        var count = Math.Ceiling((double)posts.Count / size);
+        var pagination = new PageInfoModel(size, (int)count, page);
+        var postDtoList = _mapper.Map<List<PostDto>>(posts);
+        result.Posts = postDtoList;
+        result.Pagination = pagination;
+        return result;
     }
 
     public Task<Guid> CreatePostInCommunity(Guid communityId)
