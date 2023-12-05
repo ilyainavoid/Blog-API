@@ -5,6 +5,7 @@ using BlogApi.Profiles;
 using BlogApi.Repositories;
 using BlogApi.Repositories.Interfaces;
 using BlogApi.Services;
+using BlogApi.Services.Communities;
 using BlogApi.Services.DbContexts;
 using BlogApi.Services.Tags;
 using BlogApi.Services.Users;
@@ -25,31 +26,6 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-
-}).AddJwtBearer(o =>
-{
-    o.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidIssuer = "Blog",
-        ValidateIssuer = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("7sFbGh#2L!p@WmJqNt&v3y$Bdasf89@fasda9")),
-        ValidateIssuerSigningKey = true,
-        ValidateLifetime = true,
-        LifetimeValidator = (before, expires, token, parameters) =>
-        {
-            var utcNow  = DateTime.UtcNow;
-            return before <= utcNow && utcNow < expires;
-        },
-        ValidAudience = "JwtUser",
-        ValidateAudience = true
-    };
-});
-
 builder.Services.AddScoped<TokenUtilities>();
 
 builder.Services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
@@ -57,9 +33,12 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 builder.Services.AddAutoMapper(typeof(UserProfile));
 builder.Services.AddAutoMapper(typeof(TagProfile));
+builder.Services.AddAutoMapper(typeof(CommunityProfile));
+builder.Services.AddAutoMapper(typeof(PostProfile));
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITagService, TagService>();
+builder.Services.AddScoped<ICommunityService, CommunityService>();
 
 var app = builder.Build();
 
@@ -71,8 +50,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-app.UseAuthentication();
 
 app.UseAuthorization();
 
