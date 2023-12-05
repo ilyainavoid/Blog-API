@@ -6,19 +6,16 @@ namespace BlogApi.Middlewares;
 public class AuthenticationMiddleware
 {
     private readonly RequestDelegate _next;
-    private readonly ITokenUtilities _tokenUtilities;
-
-    public AuthenticationMiddleware(RequestDelegate next, ITokenUtilities tokenUtilities)
+    public AuthenticationMiddleware(RequestDelegate next)
     {
         _next = next;
-        _tokenUtilities = tokenUtilities;
     }
 
-    public async Task Invoke(HttpContext context)
+    public async Task Invoke(HttpContext context, ITokenUtilities tokenUtilities)
     {
         var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
         var token = authHeader?.Split(" ").Last();
-        var userId = _tokenUtilities.ValidateToken(token);
+        var userId = tokenUtilities.ValidateToken(token);
         if (userId != null)
         {
             context.Items["userId"] = userId;
