@@ -1,10 +1,12 @@
 using System.Text;
 using BlogApi;
+using BlogApi.Middlewares;
 using BlogApi.Models.Entities;
 using BlogApi.Profiles;
 using BlogApi.Repositories;
 using BlogApi.Repositories.Interfaces;
 using BlogApi.Services;
+using BlogApi.Services.Communities;
 using BlogApi.Services.DbContexts;
 using BlogApi.Services.Tags;
 using BlogApi.Services.Users;
@@ -24,6 +26,7 @@ builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
 
 builder.Services.AddAuthentication(options =>
 {
@@ -50,16 +53,20 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-builder.Services.AddScoped<TokenUtilities>();
 
 builder.Services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 builder.Services.AddAutoMapper(typeof(UserProfile));
 builder.Services.AddAutoMapper(typeof(TagProfile));
+builder.Services.AddAutoMapper(typeof(CommunityProfile));
+builder.Services.AddAutoMapper(typeof(PostProfile));
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITagService, TagService>();
+builder.Services.AddScoped<ICommunityService, CommunityService>();
+
+builder.Services.AddScoped<ITokenUtilities, TokenUtilities>();
 
 var app = builder.Build();
 
@@ -70,9 +77,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+app.UseMiddleware<AuthenticationMiddleware>();
 
-app.UseAuthentication();
+app.UseHttpsRedirection();
 
 app.UseAuthorization();
 

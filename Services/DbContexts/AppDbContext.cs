@@ -11,6 +11,8 @@ public class AppDbContext : DbContext
     public DbSet<Tag> Tags { get; set; }
     public DbSet<Comment> Comments { get; set; }
     public DbSet<ExpiredToken> ExpiredTokens { get; set; }
+    public DbSet<CommunitySubscriber> CommunitiesSubscribers { get; set; }
+    public DbSet<CommunityAdministrator> CommunitiesAdministrators { get; set; }
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
