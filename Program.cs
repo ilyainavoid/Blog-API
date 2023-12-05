@@ -26,31 +26,6 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-
-}).AddJwtBearer(o =>
-{
-    o.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidIssuer = "Blog",
-        ValidateIssuer = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("7sFbGh#2L!p@WmJqNt&v3y$Bdasf89@fasda9")),
-        ValidateIssuerSigningKey = true,
-        ValidateLifetime = true,
-        LifetimeValidator = (before, expires, token, parameters) =>
-        {
-            var utcNow  = DateTime.UtcNow;
-            return before <= utcNow && utcNow < expires;
-        },
-        ValidAudience = "JwtUser",
-        ValidateAudience = true
-    };
-});
-
 builder.Services.AddScoped<TokenUtilities>();
 
 builder.Services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
@@ -75,8 +50,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-app.UseAuthentication();
 
 app.UseAuthorization();
 
