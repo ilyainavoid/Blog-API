@@ -86,6 +86,35 @@ public class CommunityController : ControllerBase
             return StatusCode(500, ex);
         }
     }
+
+    [Authorize]
+    [HttpPost("{id}/post")]
+    public async Task<ActionResult<Guid>> CreatePostInCommunity(Guid id, CreatePostDto model)
+    {
+        Guid? userId = (Guid)HttpContext.Items["userId"];
+
+        if (!ModelState.IsValid)
+        {
+            return BadRequest();
+        }
+
+        if (userId != null)
+        {
+            try
+            {
+                var response = await _communityService.CreatePostInCommunity(id, userId.Value, model);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+        else
+        {
+            return Unauthorized();
+        }
+    }
     
     [Authorize]
     [HttpGet("{id}/role")]

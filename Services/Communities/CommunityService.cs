@@ -5,6 +5,7 @@ using BlogApi.Models.Entities;
 using BlogApi.Models.Enums;
 using BlogApi.Repositories.Interfaces;
 using BlogApi.Services.DbContexts;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
@@ -123,10 +124,56 @@ public class CommunityService : ICommunityService
         result.Pagination = pagination;
         return result;
     }
-
-    public Task<Guid> CreatePostInCommunity(Guid communityId)
+    
+    public async Task<Guid> CreatePostInCommunity(Guid communityId, Guid userId, CreatePostDto newPost)
     {
-        throw new NotImplementedException();
+        bool isCommunityExists = await _context.Community.AnyAsync(c => c.Id == communityId);
+        if (!isCommunityExists)
+        {
+            throw new Exception("Not found");
+        }
+        
+        bool isAdmin =
+            await _context.CommunitiesAdministrators.AnyAsync(
+                ca => ca.UserId == userId && ca.CommunityId == communityId);
+        if (!isAdmin)
+        {
+            throw new Exception("Forbidden");
+        }
+
+        bool validTags = newPost.Tags.All(tagId => _context.Tags.Any(dbTag => dbTag.Id == tagId));
+
+        if (!validTags)
+        {
+            throw new Exception("Not Found");
+        }
+
+        List<Tag> newPostTags = await _context.Tags.Where(tag => newPost.Tags.Contains(tag.Id)).ToListAsync();
+
+        var post = new Post
+        {
+            CreateTime = DateTime.UtcNow,
+            Title = newPost.Title,
+            Description = newPost.Description,
+            ReadingTime = newPost.ReadingTime,
+            Image = newPost.Image,
+            AuthorId = userId,
+            Author = await _context.Users
+                .Where(user => user.Id == userId)
+                .Select(user => user.FullName)
+                .FirstOrDefaultAsync(),
+            CommunityId = communityId,
+            CommunityName = await _context.Community
+                .Where(community => community.Id == communityId)
+                .Select(community => community.Name)
+                .FirstOrDefaultAsync(),
+            AddressId = newPost.AddressId,
+            Tags = newPostTags
+        };
+        
+        await _context.Posts.AddAsync(post);
+        await _context.SaveChangesAsync();
+        return post.Id;
     }
 
     public async Task<string> GetCommunityRole(Guid communityId, Guid? userId)
