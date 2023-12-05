@@ -47,7 +47,7 @@ namespace BlogApi.Utilities
 
         public Guid? ValidateToken(string? token)
         {
-            if (token == null || !_context.ExpiredTokens.Any(t => t.Token == token))
+            if (token == null || _context.ExpiredTokens.Any(t => t.Token == token))
             {
                 return null;
             }
