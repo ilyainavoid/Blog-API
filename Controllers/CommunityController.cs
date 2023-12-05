@@ -139,4 +139,50 @@ public class CommunityController : ControllerBase
             return Unauthorized();
         }
     }
+
+    [Authorize]
+    [HttpPost("{id}/subscribe")]
+    public async Task<ActionResult> Subscribe(Guid id)
+    {
+        Guid? userId = (Guid)HttpContext.Items["userId"];
+        if (userId != null)
+        {
+            try
+            {
+                await _communityService.Subscribe(id, userId.Value);
+                return Ok();
+            }
+            catch (Exception exception)
+            {
+                return StatusCode(500, exception.Message);
+            }
+        }
+        else
+        {
+            return Unauthorized();
+        }
+    }
+    
+    [Authorize]
+    [HttpDelete("{id}/unsubscribe")]
+    public async Task<ActionResult> Unsubscribe(Guid id)
+    {
+        Guid? userId = (Guid)HttpContext.Items["userId"];
+        if (userId != null)
+        {
+            try
+            {
+                await _communityService.Unsubscribe(id, userId.Value);
+                return Ok();
+            }
+            catch (Exception exception)
+            {
+                return StatusCode(500, exception.Message);
+            }
+        }
+        else
+        {
+            return Unauthorized();
+        }
+    }
 }

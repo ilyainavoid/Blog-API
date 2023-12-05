@@ -1,4 +1,5 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
+using System.Runtime.Intrinsics.Arm;
 using AutoMapper;
 using BlogApi.Models.DTO;
 using BlogApi.Models.Entities;
@@ -200,13 +201,41 @@ public class CommunityService : ICommunityService
         }
     }
 
-    public Task Subscribe(Guid communityId)
+    public async Task Subscribe(Guid communityId, Guid userId)
     {
-        throw new NotImplementedException();
+        string role = await GetCommunityRole(communityId, userId);
+        if (role != "null")
+        {
+            throw new Exception($"User with id={userId} already subscribed to the community with id={communityId}");
+        }
+        else
+        {
+            var subscriber = new CommunitySubscriber
+            {
+                UserId = userId,
+                CommunityId = communityId
+            };
+            await _context.CommunitiesSubscribers.AddAsync(subscriber);
+            await _context.SaveChangesAsync();
+        }
     }
 
-    public Task Unsubscribe(Guid communityId)
+    public async Task Unsubscribe(Guid communityId, Guid userId)
     {
-        throw new NotImplementedException();
+        string role = await GetCommunityRole(communityId, userId);
+        if (role != "Subscriber")
+        {
+            throw new Exception($"User with id={userId} is not subscribed to the community with id={communityId}");
+        }
+        else
+        {
+            var subscriber = new CommunitySubscriber
+            {
+                UserId = userId,
+                CommunityId = communityId
+            };
+            _context.CommunitiesSubscribers.Remove(subscriber);
+            await _context.SaveChangesAsync();
+        }
     }
 }
