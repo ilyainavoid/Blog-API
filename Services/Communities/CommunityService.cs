@@ -1,4 +1,5 @@
-﻿using AutoMapper;
+﻿using System.IdentityModel.Tokens.Jwt;
+using AutoMapper;
 using BlogApi.Models.DTO;
 using BlogApi.Models.Entities;
 using BlogApi.Models.Enums;
@@ -6,6 +7,8 @@ using BlogApi.Repositories.Interfaces;
 using BlogApi.Services.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
+using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
+using Microsoft.IdentityModel.Abstractions;
 
 namespace BlogApi.Services.Communities;
 
@@ -126,9 +129,28 @@ public class CommunityService : ICommunityService
         throw new NotImplementedException();
     }
 
-    public Task<CommunityRole> GetCommunityRole(Guid communityId)
+    public async Task<string> GetCommunityRole(Guid communityId, Guid? userId)
     {
-        throw new NotImplementedException();
+        bool isCommunityExists = await _context.Community.AnyAsync(c => c.Id == communityId);
+        if (isCommunityExists)
+        {
+            if (await _context.CommunitiesAdministrators.AnyAsync(adm => adm.UserId == userId))
+            {
+                return CommunityRole.Administrator.ToString();
+            }
+            else if (await _context.CommunitiesSubscribers.AnyAsync(sub => sub.UserId == userId))
+            {
+                return CommunityRole.Subscriber.ToString();
+            }
+            else
+            {
+                return "null";
+            }
+        }
+        else
+        {
+            throw new Exception($"Community with id={communityId.ToString()} does not exists");
+        }
     }
 
     public Task Subscribe(Guid communityId)

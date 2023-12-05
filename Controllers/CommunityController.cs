@@ -86,4 +86,28 @@ public class CommunityController : ControllerBase
             return StatusCode(500, ex);
         }
     }
+    
+    [Authorize]
+    [HttpGet("{id}/role")]
+    
+    public async Task<ActionResult<string>> GetCommunityRole(Guid id)
+    {
+        Guid? userId = (Guid)HttpContext.Items["userId"];
+        if (userId != null)
+        {
+            try
+            {
+                var response = await _communityService.GetCommunityRole(id, userId);
+                return Ok(response);
+            }
+            catch (Exception exception)
+            {
+                return StatusCode(500, exception.Message);
+            }
+        }
+        else
+        {
+            return Unauthorized();
+        }
+    }
 }
