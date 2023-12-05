@@ -181,11 +181,11 @@ public class CommunityService : ICommunityService
         bool isCommunityExists = await _context.Community.AnyAsync(c => c.Id == communityId);
         if (isCommunityExists)
         {
-            if (await _context.CommunitiesAdministrators.AnyAsync(adm => adm.UserId == userId))
+            if (await _context.CommunitiesAdministrators.AnyAsync(adm => adm.UserId == userId && adm.CommunityId == communityId))
             {
                 return CommunityRole.Administrator.ToString();
             }
-            else if (await _context.CommunitiesSubscribers.AnyAsync(sub => sub.UserId == userId))
+            else if (await _context.CommunitiesSubscribers.AnyAsync(sub => sub.UserId == userId && sub.CommunityId == communityId))
             {
                 return CommunityRole.Subscriber.ToString();
             }
