@@ -8,13 +8,13 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace BlogApi.Utilities
 {
-    public interface ITokenHandler
+    public interface ITokenUtilities
     {
         string GenerateToken(User user);
         Guid? ValidateToken(string? token);
     }
 
-    public class TokenUtilities : ITokenHandler
+    public class TokenUtilities : ITokenUtilities
     {
         private readonly AppDbContext _context;
 
@@ -22,6 +22,7 @@ namespace BlogApi.Utilities
         {
             _context = context;
         }
+
         public string GenerateToken(User user)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -30,7 +31,8 @@ namespace BlogApi.Utilities
             {
                 NotBefore = DateTime.UtcNow,
                 Expires = DateTime.UtcNow.AddHours(1),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
+                SigningCredentials =
+                    new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
                 Issuer = "Blog",
                 Audience = "JwtUser",
                 Subject = new ClaimsIdentity(new Claim[]
@@ -80,6 +82,4 @@ namespace BlogApi.Utilities
             }
         }
     }
-    
-    
 }

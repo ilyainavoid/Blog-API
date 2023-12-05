@@ -1,5 +1,6 @@
 using System.Text;
 using BlogApi;
+using BlogApi.Middlewares;
 using BlogApi.Models.Entities;
 using BlogApi.Profiles;
 using BlogApi.Repositories;
@@ -40,7 +41,11 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<ICommunityService, CommunityService>();
 
+builder.Services.AddScoped<ITokenUtilities, TokenUtilities>();
+
 var app = builder.Build();
+
+app.UseMiddleware<AuthenticationMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
