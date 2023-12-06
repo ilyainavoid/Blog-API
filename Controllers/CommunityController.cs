@@ -70,12 +70,12 @@ public class CommunityController : ControllerBase
     }
 
     [HttpGet("{id}/post")]
-    public async Task<ActionResult<PostPagedListDto>> GetCommunityPosts(Guid id, [FromQuery] QueryParameters parameters)
+    public async Task<ActionResult<PostPagedListDto>> GetCommunityPosts(Guid id, [FromQuery] QueryParametersCommunity parametersCommunity)
     {
-        var tagIds = parameters.Tags;
-        var sorting = parameters.Sorting;
-        var page = parameters.CurrentPage;
-        var size = parameters.PageSize;
+        var tagIds = parametersCommunity.Tags;
+        var sorting = parametersCommunity.Sorting;
+        var page = parametersCommunity.CurrentPage;
+        var size = parametersCommunity.PageSize;
         try
         {
             var response = await _communityService.GetCommunityPosts(id, tagIds, sorting, page, size);

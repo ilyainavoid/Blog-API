@@ -3,7 +3,7 @@ using BlogApi.Models.Enums;
 
 namespace BlogApi.Models.DTO
 {
-    public class QueryParameters
+    public class QueryParametersCommunity
     {
         public List<Guid>? Tags { get; set; }
 
