@@ -10,12 +10,12 @@ namespace BlogApi.Services.Users
 {
     public class UserService : IUserService
     {
-        private readonly TokenUtilities _tokenUtility;
+        private readonly ITokenUtilities _tokenUtility;
         private readonly IUserRepository _userRepository;
         private readonly IBaseRepository<ExpiredToken> _expTokenRepository;
         private readonly IMapper _mapper;
 
-        public UserService(TokenUtilities tokenUtility, IUserRepository userRepository, IMapper mapper, IBaseRepository<ExpiredToken> expTokenRepository)
+        public UserService(ITokenUtilities tokenUtility, IUserRepository userRepository, IMapper mapper, IBaseRepository<ExpiredToken> expTokenRepository)
         {
             _tokenUtility = tokenUtility;
             _userRepository = userRepository;
