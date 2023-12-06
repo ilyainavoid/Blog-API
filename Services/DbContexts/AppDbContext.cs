@@ -9,6 +9,7 @@ public class AppDbContext : DbContext
     public DbSet<Post> Posts { get; set; }
     public DbSet<Community> Community { get; set; }
     public DbSet<Tag> Tags { get; set; }
+    public DbSet<Like> Likes { get; set; }
     public DbSet<Comment> Comments { get; set; }
     public DbSet<ExpiredToken> ExpiredTokens { get; set; }
     public DbSet<CommunitySubscriber> CommunitiesSubscribers { get; set; }
