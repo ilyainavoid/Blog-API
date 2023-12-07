@@ -133,6 +133,22 @@ public class PostController : ControllerBase
     [HttpDelete("{postId}/like")]
     public async Task<ActionResult<Response>> DeleteLike(Guid postId)
     {
-        throw new NotImplementedException();
+        string userIdString = User.Claims.FirstOrDefault(c => c.Type == "id").Value;
+        if (!string.IsNullOrEmpty(userIdString) && Guid.TryParse(userIdString, out Guid userId))
+        {
+            try
+            {
+                await _postService.DeleteLikeFromPost(userId, postId);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+        else
+        {
+            return StatusCode(500, "Can't parse UserId from token claims");
+        }
     }
 }
