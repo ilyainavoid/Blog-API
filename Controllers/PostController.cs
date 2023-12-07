@@ -1,4 +1,5 @@
 ﻿using BlogApi.Models.DTO;
+using BlogApi.Models.Entities;
 using BlogApi.Services.Posts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,12 +16,44 @@ public class PostController : ControllerBase
     {
         _postService = postService;
     }
-    
-    [Authorize]
+
     [HttpGet]
     public async Task<ActionResult<PostPagedListDto>> GetPosts([FromQuery] QueryParametersPost parameters)
     {
-        throw new NotImplementedException();
+        bool isAuthorized = Request.Headers.ContainsKey("Authorization");
+
+        if (isAuthorized)
+        {
+            string? userIdString = User.Claims.FirstOrDefault(c => c.Type == "id").Value;
+            if (!string.IsNullOrEmpty(userIdString) && Guid.TryParse(userIdString, out Guid userId))
+            {
+                try
+                {
+                    var response = await _postService.GetPosts(userId, parameters);
+                    return Ok(response);
+                }
+                catch (Exception ex)
+                {
+                    return StatusCode(500, ex.Message);
+                }
+            }
+            else
+            {
+                return StatusCode(500, "Can't parse UserId from token claims");
+            }
+        }
+        else
+        {
+            try
+            {
+                var response = await _postService.GetPosts(null, parameters);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
     }
     
     [Authorize]
