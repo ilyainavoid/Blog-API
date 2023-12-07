@@ -2,6 +2,7 @@
 using BlogApi.Models.DTO;
 using BlogApi.Models.Entities;
 using BlogApi.Models.Enums;
+using BlogApi.Services.Communities;
 using BlogApi.Services.DbContexts;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,11 +12,12 @@ public class PostService : IPostService {
 
     private readonly AppDbContext _context;
     private readonly IMapper _mapper;
-
-    public PostService(AppDbContext context, IMapper mapper)
+    private readonly ICommunityService _communityService;
+    public PostService(AppDbContext context, IMapper mapper, ICommunityService communityService)
     {
         _context = context;
         _mapper = mapper;
+        _communityService = communityService;
     }
     
     public async Task<PostPagedListDto> GetPosts(Guid? userId, QueryParametersPost parametersPost)
@@ -166,9 +168,110 @@ public class PostService : IPostService {
         return newPost.Id;
     }
 
-    public Task<PostFullDto> GetPostInfo(Guid? userId, Guid postId)
+    public async Task<PostFullDto> GetPostInfo(Guid userId, Guid postId)
     {
-        throw new NotImplementedException();
+
+        //Get the post
+        var postInfo = await _context.Posts
+            .Include(p => p.Tags)
+            .Include(p => p.Comments)
+            .Include(p => p.Likes)
+            .FirstOrDefaultAsync(p => p.Id == postId);
+        var result = new PostFullDto();
+
+        //Check if the post is found
+        if (postInfo == null)
+        {
+            throw new Exception($"Post with id={postId.ToString()} is not found");
+        }
+
+        //Check if the post is personal
+        bool isPersonal = postInfo.CommunityId == null;
+
+        //Determine post's parameters 
+        postInfo.HasLike = await _context.Likes.AnyAsync(like => like.AuthorId == userId && like.PostId == postId);
+        postInfo.CommentsCount = postInfo.Comments.Count();
+        postInfo.LikesAmount = postInfo.Likes.Count();
+
+
+        //Post is in some community
+        if (!isPersonal)
+        {
+            var community = await _context.Community.FindAsync(postInfo.CommunityId);
+            bool isClosed = community.IsClosed;
+
+            //Post is in a closed community
+            if (isClosed)
+            {
+                string role = await _communityService.GetCommunityRole(postInfo.CommunityId.Value, userId);
+
+                //User isn't in the closed community
+                if (role == "null")
+                {
+                    throw new Exception(
+                        $"Access to closed community post with id={postInfo.CommunityId.ToString()} is forbidden");
+                }
+
+                result = _mapper.Map<PostFullDto>(postInfo);
+                result.Tags = _mapper.Map<List<TagDto>>(postInfo.Tags);
+
+                //Add comments to a result
+                var comments = postInfo.Comments;
+                var commentsToPost = new List<CommentDto>();
+                foreach (var comment in comments)
+                {
+                    //Take comments that are not reply-comments
+                    if (comment.ParentCommentId == null)
+                    {
+                        var commentDto = _mapper.Map<CommentDto>(comment);
+                        commentsToPost.Add(commentDto);
+                    }
+                }
+                result.Comments = _mapper.Map<List<CommentDto>>(commentsToPost);
+            }
+            //Post is in a public community
+            else
+            {
+                result = _mapper.Map<PostFullDto>(postInfo);
+                result.Tags = _mapper.Map<List<TagDto>>(postInfo.Tags);
+                
+                //Add comments to a result
+                var comments = postInfo.Comments;
+                var commentsToPost = new List<CommentDto>();
+                foreach (var comment in comments)
+                {
+                    //Take comments that are not reply-comments
+                    if (comment.ParentCommentId == null)
+                    {
+                        var commentDto = _mapper.Map<CommentDto>(comment);
+                        commentsToPost.Add(commentDto);
+                    }
+                }
+                result.Comments = _mapper.Map<List<CommentDto>>(commentsToPost);
+            }
+        }
+        //Post is personal
+        else
+        {
+            result = _mapper.Map<PostFullDto>(postInfo);
+            result.Tags = _mapper.Map<List<TagDto>>(postInfo.Tags);
+                
+            //Add comments to a result
+            var comments = postInfo.Comments;
+            var commentsToPost = new List<CommentDto>();
+            foreach (var comment in comments)
+            {
+                //Take comments that are not reply-comments
+                if (comment.ParentCommentId == null)
+                {
+                    var commentDto = _mapper.Map<CommentDto>(comment);
+                    commentsToPost.Add(commentDto);
+                }
+            }
+            result.Comments = _mapper.Map<List<CommentDto>>(commentsToPost);
+        }
+
+        return result;
     }
 
     public Task AddLikeToPost(Guid? userId, Guid postId)
