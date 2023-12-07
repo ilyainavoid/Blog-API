@@ -84,10 +84,26 @@ public class PostController : ControllerBase
     }
 
     [Authorize]
-    [HttpPost("{id}")]
+    [HttpGet("{id}")]
     public async Task<ActionResult<PostFullDto>> GetPostInfo(Guid id)
     {
-        throw new NotImplementedException();
+        string userIdString = User.Claims.FirstOrDefault(c => c.Type == "id").Value;
+        if (!string.IsNullOrEmpty(userIdString) && Guid.TryParse(userIdString, out Guid userId))
+        {
+            try
+            {
+                var response = await _postService.GetPostInfo(userId, id);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+        else
+        {
+            return StatusCode(500, "Can't parse UserId from token claims");
+        }
     }
 
     [Authorize]
