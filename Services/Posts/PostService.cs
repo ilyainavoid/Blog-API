@@ -135,9 +135,35 @@ public class PostService : IPostService {
         return result;
     }
 
-    public Task<Guid> CreatePersonalPost(Guid? userId, CreatePostDto model)
+    public async Task<Guid> CreatePersonalPost(Guid userId, CreatePostDto model)
     {
-        throw new NotImplementedException();
+        bool validTags = model.Tags.All(tagId => _context.Tags.Any(dbTag => dbTag.Id == tagId));
+        if (!validTags)
+        {
+            throw new Exception("NotFound");
+        }
+        List<Tag> newPostTags = await _context.Tags.Where(tag => model.Tags.Contains(tag.Id)).ToListAsync();
+        var newPost = new Post
+        {
+            CreateTime = DateTime.UtcNow,
+            Title = model.Title,
+            Description = model.Description,
+            ReadingTime = model.ReadingTime,
+            Image = model.Image,
+            AuthorId = userId,
+            Author = await _context.Users
+                .Where(user => user.Id == userId)
+                .Select(user => user.FullName)
+                .FirstOrDefaultAsync(),
+            AddressId = model.AddressId,
+            Tags = newPostTags,
+            CommunityId = null,
+            CommunityName = null
+        };
+
+        await _context.Posts.AddAsync(newPost);
+        await _context.SaveChangesAsync();
+        return newPost.Id;
     }
 
     public Task<PostFullDto> GetPostInfo(Guid? userId, Guid postId)
