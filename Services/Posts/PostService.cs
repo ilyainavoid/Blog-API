@@ -328,8 +328,51 @@ public class PostService : IPostService {
         await _context.SaveChangesAsync();
     }
 
-    public Task DeleteLikeFromPost(Guid? userId, Guid postId)
+    public async Task DeleteLikeFromPost(Guid userId, Guid postId)
     {
-        throw new NotImplementedException();
+        //Check if the post is found
+        bool isExist = await _context.Posts.AnyAsync(post => post.Id == postId);
+        if (!isExist)
+        {
+            throw new Exception($"Post with id={postId.ToString()} is not found");
+        }
+        
+        //Get the post
+        var postInfo = await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId);
+        
+        //Check if user hasn't liked the post
+        bool hasLike = await _context.Likes.AnyAsync(like => like.AuthorId == userId && like.PostId == postId);
+        if (!hasLike)
+        {
+            throw new Exception($"Post with id={postId.ToString()} hasn't been liked");
+        }
+        
+        //Check if user has access to the post
+        var communityId = postInfo.CommunityId;
+        if (communityId.HasValue) //Post is in some community
+        {
+            var community = await _context.Community.FindAsync(communityId.Value);
+            if (community.IsClosed == true) //Post is in a closed community
+            {
+                var role = await _communityService.GetCommunityRole(communityId.Value, userId);
+                if (role == "null") //User has access to the posts of the closed community
+                {
+                    throw new Exception(
+                        $"Access to closed community post with id={postInfo.CommunityId.ToString()} is forbidden");
+                }
+            }
+        }
+
+        //Delete the like from the db table
+        var like = await _context.Likes.FirstOrDefaultAsync(like => like.AuthorId == userId && like.PostId == postId);
+        _context.Likes.Remove(like);
+
+        //Update likes counter in the post table
+        postInfo.LikesAmount -= 1;
+        postInfo.HasLike = false;
+        _context.Posts.Update(postInfo);
+
+        //Save changes
+        await _context.SaveChangesAsync();
     }
 }

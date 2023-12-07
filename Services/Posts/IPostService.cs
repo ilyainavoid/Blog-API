@@ -8,5 +8,5 @@ public interface IPostService
     Task<Guid> CreatePersonalPost(Guid userId, CreatePostDto model);
     Task<PostFullDto> GetPostInfo(Guid userId, Guid postId);
     Task AddLikeToPost(Guid userId, Guid postId);
-    Task DeleteLikeFromPost(Guid? userId, Guid postId);
+    Task DeleteLikeFromPost(Guid userId, Guid postId);
 }
