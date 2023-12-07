@@ -1,5 +1,4 @@
 ﻿using BlogApi.Models.DTO;
-using BlogApi.Models.Entities;
 using BlogApi.Services.Posts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -60,7 +59,28 @@ public class PostController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Guid>> CreatePost(CreatePostDto model)
     {
-        throw new NotImplementedException();
+        if (!ModelState.IsValid)
+        {
+            return BadRequest();
+        }
+        
+        string userIdString = User.Claims.FirstOrDefault(c => c.Type == "id").Value;
+        if (!string.IsNullOrEmpty(userIdString) && Guid.TryParse(userIdString, out Guid userId))
+        {
+            try
+            {
+                var response = await _postService.CreatePersonalPost(userId, model);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+        else
+        {
+            return StatusCode(500, "Can't parse UserId from token claims");
+        }
     }
 
     [Authorize]
