@@ -68,7 +68,7 @@ public class PostService : IPostService {
 
         if (parametersPost.MinReadingTime != 0 && parametersPost.MaxReadingTime != 0)
         {
-            posts = posts.Where(post => post.ReadingTime > minReadingTime && post.ReadingTime < maxReadingTime).ToList();
+            posts = posts.Where(post => post.ReadingTime >= minReadingTime && post.ReadingTime <= maxReadingTime).ToList();
         }
 
         if (parametersPost.AuthorsName != null)
