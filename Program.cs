@@ -6,6 +6,7 @@ using BlogApi.Profiles;
 using BlogApi.Repositories;
 using BlogApi.Repositories.Interfaces;
 using BlogApi.Services;
+using BlogApi.Services.Authors;
 using BlogApi.Services.Communities;
 using BlogApi.Services.DbContexts;
 using BlogApi.Services.Posts;
@@ -67,6 +68,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<ICommunityService, CommunityService>();
 builder.Services.AddScoped<IPostService, PostService>();
+builder.Services.AddScoped<IAuthorService, AuthorService>();
 
 builder.Services.AddScoped<ITokenUtilities, TokenUtilities>();
 

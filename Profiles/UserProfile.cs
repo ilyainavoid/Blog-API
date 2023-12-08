@@ -9,9 +9,11 @@ namespace BlogApi.Profiles
     {
         public UserProfile()
         {
-            CreateMap<UserRegisterModel, User>();
+            CreateMap<UserRegisterModel, User>()
+                .ForMember(dest => dest.IsAuthor, opt => opt.Ignore());
             CreateMap<User, UserDto>();
-            CreateMap<UserEditModel, User>();
+            CreateMap<UserEditModel, User>()
+                .ForMember(dest => dest.IsAuthor, opt => opt.Ignore());
         }
     }
 }
