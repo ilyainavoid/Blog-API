@@ -7,9 +7,8 @@ public class User()
 {
     [Required]
     public Guid Id { get; set; }
-    
-    [Required]
-    public DateTime CreateTime { get; set; }
+
+    [Required] public DateTime CreateTime { get; set; } = DateTime.UtcNow;
     
     [Required]
     public string Password { get; set; }
@@ -31,6 +30,8 @@ public class User()
     [Phone]
     [RegularExpression(@"^\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}$")]
     public string? PhoneNumber { get; set; }
+
+    public bool IsAuthor { get; set; } = false;
     
     public List<Comment> Comments { get; set; }
     public List<Like> Likes { get; set; }
