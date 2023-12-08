@@ -20,7 +20,7 @@ public class AuthorController : ControllerBase
     {
         try
         {
-            var response = _authorService.GetAuthors();
+            var response = await _authorService.GetAuthors();
             return Ok(response);
         }
         catch (Exception ex)
