@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using BlogApi.Exceptions;
 using BlogApi.Migrations;
 using BlogApi.Models.DTO;
 using BlogApi.Models.Entities;
@@ -54,14 +55,14 @@ namespace BlogApi.Services.Users
             var user = await _userRepository.GetUserByEmail(credentials.Email);
             if (user == null)
             {
-                throw new Exception("User not found.");
+                throw new BadRequestException($"User with email={credentials.Email} is not found");
             }
 
             bool isValidPassword = BCrypt.Net.BCrypt.Verify(credentials.Password, user.Password);
 
             if (!isValidPassword)
             {
-                throw new Exception("Invalid password.");
+                throw new BadRequestException("Invalid password");
             }
 
             var token = _tokenUtility.GenerateToken(user);

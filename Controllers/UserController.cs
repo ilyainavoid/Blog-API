@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Security.Claims;
+using BlogApi.Exceptions;
 using BlogApi.Models.DTO;
 using BlogApi.Models.Entities;
 using BlogApi.Services;
@@ -22,15 +23,27 @@ public class UserController : ControllerBase
     }
 
     [HttpPost("register")]
-    public async Task<ActionResult<TokenResponse>> Register([FromBody] UserRegisterModel userRegisterModel)
+    public async Task<ActionResult> Register([FromBody] UserRegisterModel userRegisterModel)
     {
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
         }
 
-        var response = await _userService.Register(userRegisterModel);
-        return Ok(response);
+        try
+        {
+            var response = await _userService.Register(userRegisterModel);
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = "Internal server error"
+            };
+            return StatusCode(500, response);
+        }
     }
 
     [HttpPost("login")]
@@ -41,8 +54,29 @@ public class UserController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        var response = await _userService.Login(loginCredentials);
-        return Ok(response);
+        try
+        {
+            var response = await _userService.Login(loginCredentials);
+            return Ok(response);
+        }
+        catch (BadRequestException exception)
+        {
+            var response = new Response
+            {
+                Status = "Login failed",
+                Message = exception.Message
+            };
+            return StatusCode(400, response);
+        }
+        catch (Exception exception)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = "Internal server error"
+            };
+            return StatusCode(500, response);
+        }
     }
     
     [Authorize]
