@@ -16,7 +16,7 @@ public class AuthorController : ControllerBase
     }
     
     [HttpGet("list")]
-    public async Task<ActionResult<List<AuthorDto>>> GetAuthors()
+    public async Task<ActionResult> GetAuthors()
     {
         try
         {
@@ -25,7 +25,12 @@ public class AuthorController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = "Internal Server Error"
+            };
+            return StatusCode(500, response);
         }
     }
 }

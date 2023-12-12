@@ -16,7 +16,7 @@ public class TagController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<TagDto>>> GetAllTags()
+    public async Task<ActionResult> GetAllTags()
     {
         try
         {
@@ -25,7 +25,12 @@ public class TagController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, "Error occured");
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = "Internal Server Error"
+            };
+            return StatusCode(500, response);
         }
     }
 }
