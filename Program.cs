@@ -1,11 +1,12 @@
 using System.Text;
-using BlogApi;
+using System.Text.Json.Serialization;
 using BlogApi.Middlewares;
 using BlogApi.Models.Entities;
 using BlogApi.Profiles;
 using BlogApi.Repositories;
 using BlogApi.Repositories.Interfaces;
 using BlogApi.Services;
+using BlogApi.Services.Address;
 using BlogApi.Services.Authors;
 using BlogApi.Services.Communities;
 using BlogApi.Services.DbContexts;
@@ -69,8 +70,15 @@ builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<ICommunityService, CommunityService>();
 builder.Services.AddScoped<IPostService, PostService>();
 builder.Services.AddScoped<IAuthorService, AuthorService>();
+builder.Services.AddScoped<IAddressService, AddressService>();
 
 builder.Services.AddScoped<ITokenUtilities, TokenUtilities>();
+
+builder.Services.AddControllers().AddJsonOptions(x =>
+{
+
+    x.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 
 var app = builder.Build();
 
