@@ -1,4 +1,5 @@
-﻿using BlogApi.Models.DTO;
+﻿using BlogApi.Exceptions;
+using BlogApi.Models.DTO;
 using BlogApi.Services.Address;
 using Microsoft.AspNetCore.Mvc;
 
@@ -42,14 +43,23 @@ public class AddressController : ControllerBase
             var response = await _addressService.GetChain(objectGuid);
             return Ok(response);
         }
+        catch (NotFoundException exception)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = exception.Message
+            };
+            return StatusCode(404, response);
+        }
         catch (Exception ex)
         {
             var response = new Response
             {
                 Status = "Error occured",
-                Message = ex.Message
+                Message = "Internal Server Error"
             };
-            return StatusCode(500, Response);
+            return StatusCode(500, response);
         }
     }
 }

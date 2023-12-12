@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.Metrics;
 using BlogApi.Data;
+using BlogApi.Exceptions;
 using BlogApi.Models.DTO;
 using BlogApi.Models.Entities;
 using BlogApi.Models.Enums;
@@ -88,7 +89,7 @@ public class AddressService : IAddressService
         }
         else
         {
-            throw new Exception($"Not Found found object with ObjectGuid={objectGuid}");
+            throw new NotFoundException($"Not Found found object with ObjectGuid={objectGuid}");
         }
 
 
