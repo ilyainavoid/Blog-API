@@ -3,6 +3,7 @@ using System;
 using BlogApi.Services.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BlogApi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231212164606_CommentPostId")]
+    partial class CommentPostId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -60,8 +63,6 @@ namespace BlogApi.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AuthorId");
-
-                    b.HasIndex("ParentCommentId");
 
                     b.HasIndex("PostId");
 
@@ -292,10 +293,6 @@ namespace BlogApi.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("BlogApi.Models.Entities.Comment", null)
-                        .WithMany("ChildComments")
-                        .HasForeignKey("ParentCommentId");
-
                     b.HasOne("BlogApi.Models.Entities.Post", null)
                         .WithMany("Comments")
                         .HasForeignKey("PostId");
@@ -384,11 +381,6 @@ namespace BlogApi.Migrations
                         .HasForeignKey("TagsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("BlogApi.Models.Entities.Comment", b =>
-                {
-                    b.Navigation("ChildComments");
                 });
 
             modelBuilder.Entity("BlogApi.Models.Entities.Community", b =>

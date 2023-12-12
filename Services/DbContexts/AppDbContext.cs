@@ -56,5 +56,10 @@ public class AppDbContext : DbContext
             .HasOne(ca => ca.Community)
             .WithMany(c => c.Administrators)
             .HasForeignKey(ca => ca.CommunityId);
+
+        modelBuilder.Entity<Comment>()
+            .HasMany(c => c.ChildComments)
+            .WithOne()
+            .HasForeignKey(c => c.ParentCommentId);
     }
 }

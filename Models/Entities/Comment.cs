@@ -11,9 +11,10 @@ public class Comment
     public DateTime? DeleteDate { get; set; }
     public Guid AuthorId { get; set; }
     public string AuthorName { get; set; }
-    public int SubComments { get; set; }
+    public int SubComments { get; set; } = 0;
     
     public Guid? ParentCommentId { get; set; }
+    public Guid? PostId { get; set; }
     
     [NotMapped]
     public List<Comment> ChildComments { get; set; }

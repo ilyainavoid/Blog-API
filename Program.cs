@@ -8,6 +8,7 @@ using BlogApi.Repositories.Interfaces;
 using BlogApi.Services;
 using BlogApi.Services.Address;
 using BlogApi.Services.Authors;
+using BlogApi.Services.Comments;
 using BlogApi.Services.Communities;
 using BlogApi.Services.DbContexts;
 using BlogApi.Services.Posts;
@@ -71,6 +72,7 @@ builder.Services.AddScoped<ICommunityService, CommunityService>();
 builder.Services.AddScoped<IPostService, PostService>();
 builder.Services.AddScoped<IAuthorService, AuthorService>();
 builder.Services.AddScoped<IAddressService, AddressService>();
+builder.Services.AddScoped<ICommentService, CommentService>();
 
 builder.Services.AddScoped<ITokenUtilities, TokenUtilities>();
 

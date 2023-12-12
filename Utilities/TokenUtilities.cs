@@ -37,7 +37,7 @@ namespace BlogApi.Utilities
                 Audience = "JwtUser",
                 Subject = new ClaimsIdentity(new Claim[]
                 {
-                    new Claim("id", user.Id.ToString())
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
                 })
             };
 
