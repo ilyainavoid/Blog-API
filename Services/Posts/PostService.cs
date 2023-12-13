@@ -70,6 +70,7 @@ public class PostService : IPostService {
                 posts = await _context.Posts
                     .Include(post => post.Tags)
                     .Include(p => p.Comments)
+                    .OrderByDescending(post => post.CreateTime)
                     .ToListAsync();
                 break;
         }
