@@ -133,6 +133,7 @@ public class CommunityService : ICommunityService
                 posts = await _context.Posts
                     .Where(post => post.CommunityId == communityId)
                     .Include(post => post.Tags)
+                    .OrderByDescending(post => post.CreateTime)
                     .ToListAsync();
                 break;
         }
