@@ -21,11 +21,15 @@ public class CommentController : ControllerBase
     [HttpGet("comment/{id}/tree")]
     public async Task<ActionResult> GetTree(Guid id)
     {
-        string? userId = null;
         var idClaim = HttpContext.Items["userId"];
+        Guid userId = default;
         if (idClaim != null)
         {
-            userId = idClaim.ToString();
+
+            if (Guid.TryParse(idClaim.ToString(), out var parsedId))
+            {
+                userId = parsedId;
+            }
         }
 
         try
@@ -75,21 +79,17 @@ public class CommentController : ControllerBase
     [HttpPost("post/{id}/comment")]
     public async Task<ActionResult> AddComment(Guid id, [FromBody] CreateCommentDto model)
     {
-        string? userId = null;
         var idClaim = HttpContext.Items["userId"];
+        Guid userId = default;
         if (idClaim != null)
         {
-            userId = idClaim.ToString();
-        }
-        else
-        {
-            var response = new Response
+
+            if (Guid.TryParse(idClaim.ToString(), out var parsedId))
             {
-                Status = "Error occured",
-                Message = "User is unauthorized"
-            };
-            return StatusCode(401, response);
+                userId = parsedId;
+            }
         }
+
         if (!ModelState.IsValid)
         {
             return BadRequest();
@@ -142,7 +142,17 @@ public class CommentController : ControllerBase
     [HttpPut("comment/{id}")]
     public async Task<ActionResult> EditComment(Guid id, [FromBody] UpdateCommentDto model)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var idClaim = HttpContext.Items["userId"];
+        Guid userId = default;
+        if (idClaim != null)
+        {
+
+            if (Guid.TryParse(idClaim.ToString(), out var parsedId))
+            {
+                userId = parsedId;
+            }
+        }
+
         if (!ModelState.IsValid)
         {
             return BadRequest();
@@ -186,7 +196,17 @@ public class CommentController : ControllerBase
     [HttpDelete("comment/{id}")]
     public async Task<ActionResult> DeleteComment(Guid id)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var idClaim = HttpContext.Items["userId"];
+        Guid userId = default;
+        if (idClaim != null)
+        {
+
+            if (Guid.TryParse(idClaim.ToString(), out var parsedId))
+            {
+                userId = parsedId;
+            }
+        }
+
         try
         {
             await _commentService.DeleteComment(id, userId);

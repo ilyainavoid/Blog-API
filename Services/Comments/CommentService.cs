@@ -19,8 +19,13 @@ public class CommentService : ICommentService
         _mapper = mapper;
     }
 
-    public async Task<List<CommentDto>> GetTree(Guid id, string userIdString)
+    public async Task<List<CommentDto>> GetTree(Guid id, Guid userId)
     {
+        if (userId == default)
+        {
+            throw new UnauthorizedException("User is unauthorized");
+        }
+
         var parentComment = await _context.Comments.Include(c => c.ChildComments).FirstOrDefaultAsync(comment => comment.Id == id);
         //Check if exists
         if (parentComment == null)
@@ -37,10 +42,10 @@ public class CommentService : ICommentService
         if (post.CommunityId != null)
         {
             bool isSubscriber = _context.CommunitiesSubscribers.Any(cs =>
-                cs.CommunityId == post.CommunityId && cs.UserId.ToString() == userIdString);
+                cs.CommunityId == post.CommunityId && cs.UserId == userId);
             
             bool isAdmin = _context.CommunitiesAdministrators.Any(cs =>
-                cs.CommunityId == post.CommunityId && cs.UserId.ToString() == userIdString);
+                cs.CommunityId == post.CommunityId && cs.UserId == userId);
 
             if (!isAdmin && !isSubscriber)
             {
@@ -85,8 +90,13 @@ public class CommentService : ICommentService
         }
     }
 
-    public async Task AddComment(Guid id, string userIdString, CreateCommentDto commentModel)
+    public async Task AddComment(Guid id, Guid userId, CreateCommentDto commentModel)
     {
+        if (userId == default)
+        {
+            throw new UnauthorizedException("User is unauthorized");
+        }
+
         //Check if post exists
         bool postExists = await _context.Posts.AnyAsync(post => post.Id == id);
         if (!postExists)
@@ -115,101 +125,99 @@ public class CommentService : ICommentService
         var post = await _context.Posts.FindAsync(id);
         var communityId = post.CommunityId;
 
-        //Parse token from the string
-        if (Guid.TryParse(userIdString, out var userId))
+        if (communityId != null)
         {
-            if (communityId != null)
-            {
-                //Check if user has access to the post
-                bool hasAccess =
-                    await _context.CommunitiesAdministrators.AnyAsync(
-                        admin => admin.UserId.ToString() == userIdString && admin.CommunityId == communityId);
+            //Check if user has access to the post
+            bool hasAccess =
+                await _context.CommunitiesAdministrators.AnyAsync(
+                    admin => admin.UserId == userId && admin.CommunityId == communityId);
 
-                if (!hasAccess)
-                {
-                    throw new ForbiddenException("Forbidden");
-                }
-            }
-
-            //Create new comment and insert
-            var newComment = new Comment
-            {
-                CreateTime = DateTime.UtcNow,
-                Content = commentModel.Content,
-                AuthorId = userId,
-                AuthorName = _context.Users
-                    .Where(u => u.Id == userId)
-                    .Select(u => u.FullName)
-                    .FirstOrDefault(),
-                SubComments = 0,
-                ParentCommentId = commentModel.ParentId,
-                PostId = id
-            };
-            await _context.Comments.AddAsync(newComment);
-        }
-        
-        await _context.SaveChangesAsync();
-    }
-
-    public async Task EditComment(Guid id, string userIdString, UpdateCommentDto commentModel)
-    {
-        //Parse token from the string
-        if (Guid.TryParse(userIdString, out var userId))
-        {
-            var comment = await _context.Comments.FindAsync(id);
-            
-            //Check if comment exists
-            if (comment == null)
-            {
-                throw new NotFoundException($"Comment with id={id} is not found in database");
-            }
-            
-            //Check if user has access to the comment
-            if (comment.AuthorId != userId)
+            if (!hasAccess)
             {
                 throw new ForbiddenException("Forbidden");
             }
-            
-            //Update data of comment
-            comment.Content = commentModel.Content;
-            comment.ModifiedDate = DateTime.UtcNow;
+        }
+
+        //Create new comment and insert
+        var newComment = new Comment
+        {
+            CreateTime = DateTime.UtcNow,
+            Content = commentModel.Content,
+            AuthorId = userId,
+            AuthorName = _context.Users
+                .Where(u => u.Id == userId)
+                .Select(u => u.FullName)
+                .FirstOrDefault(),
+            SubComments = 0,
+            ParentCommentId = commentModel.ParentId,
+            PostId = id
+        };
+        await _context.Comments.AddAsync(newComment);
+
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task EditComment(Guid id, Guid userId, UpdateCommentDto commentModel)
+    {
+        if (userId == default)
+        {
+            throw new UnauthorizedException("User is unauthorized");
+        }
+
+        var comment = await _context.Comments.FindAsync(id);
+
+        //Check if comment exists
+        if (comment == null)
+        {
+            throw new NotFoundException($"Comment with id={id} is not found in database");
+        }
+
+        //Check if user has access to the comment
+        if (comment.AuthorId != userId)
+        {
+            throw new ForbiddenException("Forbidden");
+        }
+
+        //Update data of comment
+        comment.Content = commentModel.Content;
+        comment.ModifiedDate = DateTime.UtcNow;
+        _context.Comments.Update(comment);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task DeleteComment(Guid id, Guid userId)
+    {
+        if (userId == default)
+        {
+            throw new UnauthorizedException("User is unauthorized");
+        }
+
+        var comment = await _context.Comments.Include(c => c.ChildComments).FirstOrDefaultAsync(c => c.Id == id);
+
+        //Check if comment exists
+        if (comment == null)
+        {
+            throw new NotFoundException($"Comment with id={id} is not found in database");
+        }
+
+        //Check if user has access to the comment
+        if (comment.AuthorId != userId)
+        {
+            throw new ForbiddenException("Forbidden");
+        }
+
+        //If there aren't any replies
+        if (comment.ChildComments.Count == 0)
+        {
+            //Delete the comment
+            _context.Comments.Remove(comment);
+        }
+        //If there're replies
+        else
+        {
+            comment.Content = "";
+            comment.DeleteDate = DateTime.UtcNow;
             _context.Comments.Update(comment);
-        }
-        await _context.SaveChangesAsync();
-    }
-
-    public async Task DeleteComment(Guid id, string userIdString)
-    {
-        //Parse token from the string
-        if (Guid.TryParse(userIdString, out var userId))
-        {
-            var comment = await _context.Comments.Include(c => c.ChildComments).FirstOrDefaultAsync(c => c.Id == id);
-            
-            //Check if comment exists
-            if (comment == null)
-            {
-                throw new NotFoundException($"Comment with id={id} is not found in database");
-            }
-            
-            //Check if user has access to the comment
-            if (comment.AuthorId != userId)
-            {
-                throw new ForbiddenException("Forbidden");
-            }
-
-            //If there aren't any replies
-            if (comment.ChildComments.Count == 0)
-            {
-                //Delete the comment
-                _context.Comments.Remove(comment);
-            }
-            //If there're replies
-            else
-            {
-                comment.Content = "";
-                comment.DeleteDate = DateTime.UtcNow;
-                _context.Comments.Update(comment);
-            }
         }
         await _context.SaveChangesAsync();
     }
