@@ -98,40 +98,88 @@ public class UserController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, "Internal Server Error");
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = "Internal server error"
+            };
+            return StatusCode(500, response);
         }
     }
 
     [Authorize]
     [HttpGet("profile")]
-    public async Task<ActionResult<UserDto>> GetProfile()
+    public async Task<ActionResult> GetProfile()
     {
-
-        var idClaim = HttpContext.User.FindFirst("id");
-        UserDto response = new UserDto();
+        var idClaim = HttpContext.Items["userId"];
+        Guid userId = default;
         if (idClaim != null) {
 
-            if (Guid.TryParse(idClaim.Value, out var userId))
+            if (Guid.TryParse(idClaim.ToString(), out var Id))
             {
-                response = await _userService.GetProfileInfo(userId);
+                userId = Id;
             }
         }
-        return Ok(response);
+        try
+        {
+            var response = await _userService.GetProfileInfo(userId);
+            return Ok(response);
+        }
+        catch (UnauthorizedException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return StatusCode(401, response);
+        }
+        catch (Exception ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = "Internal server error"
+            };
+            return StatusCode(500, response);
+        }
     }
     
     [Authorize]
     [HttpPut("profile")]
     public async Task<ActionResult<UserDto>> EditProfile([FromBody] UserEditModel userEditModel)
     {
-
-        var idClaim = HttpContext.User.FindFirst("id");
+        var idClaim = HttpContext.Items["userId"];
+        Guid userId = default;
         if (idClaim != null) {
 
-            if (Guid.TryParse(idClaim.Value, out var userId))
+            if (Guid.TryParse(idClaim.ToString(), out var id))
             {
-                await _userService.EditProfileInfo(userId, userEditModel);
+                userId = id;
             }
         }
-        return Ok();
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+        try
+        {
+            await _userService.EditProfileInfo(userId, userEditModel);
+            var response = new Response
+            {
+                Status = "Success",
+                Message = "User's profile has been updated"
+            };
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = "Internal server error"
+            };
+            return StatusCode(500, response);
+        }
     }
 }

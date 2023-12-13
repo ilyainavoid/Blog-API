@@ -85,7 +85,7 @@ namespace BlogApi.Services.Users
             var user = await _userRepository.Get(id);
             if (user == null)
             {
-                throw new Exception("Пользователь не найден");
+                throw new UnauthorizedException("User is not authorized");
             }
             var response = _mapper.Map<UserDto>(user);
             return response;
@@ -96,7 +96,7 @@ namespace BlogApi.Services.Users
             var user = await _userRepository.Get(id);
             if (user == null)
             {
-                throw new Exception("Пользователь не найден");
+                throw new UnauthorizedException("User is not authorized");
             }
             var editedUser = _mapper.Map(userEditModel, user);
             _userRepository.Update(editedUser);

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using BlogApi.Exceptions;
 using BlogApi.Models.DTO;
 using BlogApi.Models.Entities;
 using BlogApi.Models.Enums;
@@ -20,9 +21,9 @@ public class PostService : IPostService {
         _communityService = communityService;
     }
     
-    public async Task<PostPagedListDto> GetPosts(Guid? userId, QueryParametersPost parametersPost)
+    public async Task<PostPagedListDto> GetPosts(Guid userId, QueryParametersPost parametersPost)
     {
-        bool isAuthorized = userId != null;
+        bool isAuthorized = userId != default;
         var posts = new List<Post>();
         var postDtos = new List<PostDto>();
 
@@ -35,6 +36,7 @@ public class PostService : IPostService {
             case PostSorting.CreateAsc:
                 posts = await _context.Posts
                     .Include(post => post.Tags)
+                    .Include(p => p.Comments)
                     .OrderBy(post => post.CreateTime)
                     .ToListAsync();
                 break;
@@ -42,6 +44,7 @@ public class PostService : IPostService {
             case PostSorting.CreateDesc:
                 posts = await _context.Posts
                     .Include(post => post.Tags)
+                    .Include(p => p.Comments)
                     .OrderByDescending(post => post.CreateTime)
                     .ToListAsync();
                 break;
@@ -49,6 +52,7 @@ public class PostService : IPostService {
             case PostSorting.LikeAsc:
                 posts = await _context.Posts
                     .Include(post => post.Tags)
+                    .Include(p => p.Comments)
                     .OrderBy(post => post.LikesAmount)
                     .ToListAsync();
                 break;
@@ -56,6 +60,7 @@ public class PostService : IPostService {
             case PostSorting.LikeDesc:
                 posts = await _context.Posts
                     .Include(post => post.Tags)
+                    .Include(p => p.Comments)
                     .OrderByDescending(post => post.LikesAmount)
                     .ToListAsync();
                 break;
@@ -64,13 +69,19 @@ public class PostService : IPostService {
             default:
                 posts = await _context.Posts
                     .Include(post => post.Tags)
+                    .Include(p => p.Comments)
                     .ToListAsync();
                 break;
         }
 
-        if (parametersPost.MinReadingTime != 0 && parametersPost.MaxReadingTime != 0)
+        if (parametersPost.MinReadingTime != 0)
         {
-            posts = posts.Where(post => post.ReadingTime >= minReadingTime && post.ReadingTime <= maxReadingTime).ToList();
+            posts = posts.Where(post => post.ReadingTime >= minReadingTime).ToList();
+        }
+
+        if (parametersPost.MaxReadingTime != 0)
+        {
+            posts = posts.Where(post => post.ReadingTime <= maxReadingTime).ToList();
         }
 
         if (parametersPost.AuthorsName != null)
@@ -84,22 +95,29 @@ public class PostService : IPostService {
             posts = posts.Where(p => p.Tags.Any(tag => parametersPost.Tags.Contains(tag.Id))).ToList();
         }
         
+        //Логика для авторизованного пользователя
         if (isAuthorized)
         {
-            if (parametersPost.OnlyMyCommunities)
-            {
-                var mySubscriptions = await _context.CommunitiesSubscribers.Where(cs => cs.UserId == userId)
-                    .Select(cs => cs.CommunityId).ToListAsync();
+          
+            var mySubscriptions = await _context.CommunitiesSubscribers.Where(cs => cs.UserId == userId)
+                .Select(cs => cs.CommunityId).ToListAsync();
 
-                var myManagedCommunities = await _context.CommunitiesAdministrators.Where(ca => ca.UserId == userId)
-                    .Select(ca => ca.CommunityId).ToListAsync();
+            var myManagedCommunities = await _context.CommunitiesAdministrators.Where(ca => ca.UserId == userId)
+                .Select(ca => ca.CommunityId).ToListAsync();
 
-                var myCommunities = myManagedCommunities.Union(mySubscriptions).ToList();
+            var myCommunities = myManagedCommunities.Union(mySubscriptions).ToList();
                 
-                if (myCommunities != null)
-                {
-                    posts = posts.Where(p => myCommunities.Any(mc => mc == p.CommunityId)).ToList();
-                }
+            if (parametersPost.OnlyMyCommunities && myCommunities != null)
+            {
+                posts = posts.Where(p => myCommunities.Any(mc => mc == p.CommunityId)).ToList();
+            }
+            else if (!parametersPost.OnlyMyCommunities && myCommunities != null)
+            {
+                posts = posts
+                    .Where(p => (p.CommunityId == null) ||
+                                (_context.Community.Any(c => c.Id == p.CommunityId && !c.IsClosed)) ||
+                                myCommunities.Any(mc => mc == p.CommunityId && (_context.Community.Any(c => c.Id == mc && c.IsClosed))))
+                    .ToList();
             }
 
             foreach (var post in posts)
@@ -113,12 +131,13 @@ public class PostService : IPostService {
             
             postDtos = _mapper.Map<List<PostDto>>(posts);
         }
+        //Логика для неавторизованного пользователя
         else
         {
-            foreach (var post in posts)
-            {
-                post.HasLike = false;
-            }
+            posts = posts
+                .Where(p => p.CommunityId == null ||
+                            (_context.Community.Any(c => c.Id == p.CommunityId && !c.IsClosed)))
+                .ToList();
             postDtos = _mapper.Map<List<PostDto>>(posts);
         }
 
@@ -139,10 +158,15 @@ public class PostService : IPostService {
 
     public async Task<Guid> CreatePersonalPost(Guid userId, CreatePostDto model)
     {
+        if (userId == default)
+        {
+            throw new UnauthorizedException("User is unauthorized");
+        }
+
         bool validTags = model.Tags.All(tagId => _context.Tags.Any(dbTag => dbTag.Id == tagId));
         if (!validTags)
         {
-            throw new Exception("NotFound");
+            throw new NotFoundException("NotFound");
         }
         List<Tag> newPostTags = await _context.Tags.Where(tag => model.Tags.Contains(tag.Id)).ToListAsync();
         var newPost = new Post
@@ -170,6 +194,10 @@ public class PostService : IPostService {
 
     public async Task<PostFullDto> GetPostInfo(Guid userId, Guid postId)
     {
+        if (userId == default)
+        {
+            throw new UnauthorizedException("User is unauthorized");
+        }
 
         //Get the post
         var postInfo = await _context.Posts
@@ -182,7 +210,7 @@ public class PostService : IPostService {
         //Check if the post is found
         if (postInfo == null)
         {
-            throw new Exception($"Post with id={postId.ToString()} is not found");
+            throw new NotFoundException($"Post with id={postId.ToString()} is not found");
         }
 
         //Check if the post is personal
@@ -208,7 +236,7 @@ public class PostService : IPostService {
                 //User isn't in the closed community
                 if (role == "null")
                 {
-                    throw new Exception(
+                    throw new ForbiddenException(
                         $"Access to closed community post with id={postInfo.CommunityId.ToString()} is forbidden");
                 }
 
@@ -276,11 +304,16 @@ public class PostService : IPostService {
 
     public async Task AddLikeToPost(Guid userId, Guid postId)
     {
+        if (userId == default)
+        {
+            throw new UnauthorizedException("User is unauthorized");
+        }
+
         //Check if the post is found
         bool isExist = await _context.Posts.AnyAsync(post => post.Id == postId);
         if (!isExist)
         {
-            throw new Exception($"Post with id={postId.ToString()} is not found");
+            throw new NotFoundException($"Post with id={postId.ToString()} is not found");
         }
         
         //Get the post
@@ -290,7 +323,7 @@ public class PostService : IPostService {
         bool hasLike = await _context.Likes.AnyAsync(like => like.AuthorId == userId && like.PostId == postId);
         if (hasLike)
         {
-            throw new Exception($"Post with id={postId.ToString()} has been already liked");
+            throw new BadRequestException($"Post with id={postId.ToString()} has already been liked");
         }
         
         //Check if user has access to the post
@@ -303,7 +336,7 @@ public class PostService : IPostService {
                 var role = await _communityService.GetCommunityRole(communityId.Value, userId);
                 if (role == "null") //User has access to the posts of the closed community
                 {
-                    throw new Exception(
+                    throw new ForbiddenException(
                         $"Access to closed community post with id={postInfo.CommunityId.ToString()} is forbidden");
                 }
             }
@@ -330,11 +363,16 @@ public class PostService : IPostService {
 
     public async Task DeleteLikeFromPost(Guid userId, Guid postId)
     {
+        if (userId == default)
+        {
+            throw new UnauthorizedException("User is unauthorized");
+        }
+
         //Check if the post is found
         bool isExist = await _context.Posts.AnyAsync(post => post.Id == postId);
         if (!isExist)
         {
-            throw new Exception($"Post with id={postId.ToString()} is not found");
+            throw new NotFoundException($"Post with id={postId.ToString()} is not found");
         }
         
         //Get the post
@@ -344,7 +382,7 @@ public class PostService : IPostService {
         bool hasLike = await _context.Likes.AnyAsync(like => like.AuthorId == userId && like.PostId == postId);
         if (!hasLike)
         {
-            throw new Exception($"Post with id={postId.ToString()} hasn't been liked");
+            throw new BadRequestException($"Post with id={postId.ToString()} hasn't been liked");
         }
         
         //Check if user has access to the post
@@ -357,7 +395,7 @@ public class PostService : IPostService {
                 var role = await _communityService.GetCommunityRole(communityId.Value, userId);
                 if (role == "null") //User has access to the posts of the closed community
                 {
-                    throw new Exception(
+                    throw new ForbiddenException(
                         $"Access to closed community post with id={postInfo.CommunityId.ToString()} is forbidden");
                 }
             }

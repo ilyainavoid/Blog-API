@@ -8,7 +8,8 @@ public class PostProfile : Profile
 {
     public PostProfile()
     {
-        CreateMap<Post, PostDto>();
+        CreateMap<Post, PostDto>()
+            .ForMember(dest => dest.CommentsCount, opt => opt.MapFrom(src => src.Comments.Count));
         CreateMap<Post, PostFullDto>();
     }
 }

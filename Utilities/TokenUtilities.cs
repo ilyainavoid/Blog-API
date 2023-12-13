@@ -73,10 +73,18 @@ namespace BlogApi.Utilities
                 }, out SecurityToken validToken);
 
                 var jwtToken = (JwtSecurityToken)validToken;
-                var userId = Guid.Parse(jwtToken.Claims.First(claim => claim.Type == "id").Value);
-                return userId;
+                var userIdClaim = jwtToken.Claims.FirstOrDefault(claim => claim.Type == "nameid");
+                if (userIdClaim != null)
+                {
+                    var userId = Guid.Parse(userIdClaim.Value);
+                    return userId;
+                }
+                else
+                {
+                    return null;
+                }
             }
-            catch
+            catch (Exception ex)
             {
                 return null;
             }

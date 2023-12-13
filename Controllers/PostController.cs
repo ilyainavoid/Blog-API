@@ -1,4 +1,5 @@
-﻿using BlogApi.Models.DTO;
+﻿using BlogApi.Exceptions;
+using BlogApi.Models.DTO;
 using BlogApi.Services.Posts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,39 +20,56 @@ public class PostController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<PostPagedListDto>> GetPosts([FromQuery] QueryParametersPost parameters)
     {
-        bool isAuthorized = Request.Headers.ContainsKey("Authorization");
+        var idClaim = HttpContext.Items["userId"];
+        Guid userId = default;
+        if (idClaim != null) {
 
-        if (isAuthorized)
-        {
-            string? userIdString = User.Claims.FirstOrDefault(c => c.Type == "id").Value;
-            if (!string.IsNullOrEmpty(userIdString) && Guid.TryParse(userIdString, out Guid userId))
+            if (Guid.TryParse(idClaim.ToString(), out var id))
             {
-                try
-                {
-                    var response = await _postService.GetPosts(userId, parameters);
-                    return Ok(response);
-                }
-                catch (Exception ex)
-                {
-                    return StatusCode(500, ex.Message);
-                }
-            }
-            else
-            {
-                return StatusCode(500, "Can't parse UserId from token claims");
+                userId = id;
             }
         }
-        else
+        
+        try
         {
-            try
+            var response = await _postService.GetPosts(userId, parameters);
+            return Ok(response);
+        }
+        catch (NotFoundException ex)
+        {
+            var response = new Response
             {
-                var response = await _postService.GetPosts(null, parameters);
-                return Ok(response);
-            }
-            catch (Exception ex)
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return StatusCode(404, response);
+        }
+        catch (BadRequestException ex)
+        {
+            var response = new Response
             {
-                return StatusCode(500, ex.Message);
-            }
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return BadRequest(response);
+        }
+        catch (ForbiddenException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return StatusCode(403, response);
+        }
+        catch (Exception ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = "Internal Server Error"
+            };
+            return StatusCode(500, ex.Message);
         }
     }
     
@@ -63,23 +81,59 @@ public class PostController : ControllerBase
         {
             return BadRequest();
         }
-        
-        string userIdString = User.Claims.FirstOrDefault(c => c.Type == "id").Value;
-        if (!string.IsNullOrEmpty(userIdString) && Guid.TryParse(userIdString, out Guid userId))
+
+        var idClaim = HttpContext.Items["userId"];
+        Guid userId = default;
+        if (idClaim != null)
         {
-            try
+
+            if (Guid.TryParse(idClaim.ToString(), out var id))
             {
-                var response = await _postService.CreatePersonalPost(userId, model);
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
+                userId = id;
             }
         }
-        else
+
+
+        try
         {
-            return StatusCode(500, "Can't parse UserId from token claims");
+            var response = await _postService.CreatePersonalPost(userId, model);
+            return Ok(response);
+        }
+        catch (NotFoundException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return StatusCode(404, response);
+        }
+        catch (BadRequestException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return BadRequest(response);
+        }
+        catch (ForbiddenException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return StatusCode(403, response);
+        }
+        catch (Exception ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = "Internal Server Error"
+            };
+            return StatusCode(500, ex.Message);
         }
     }
 
@@ -87,22 +141,58 @@ public class PostController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<PostFullDto>> GetPostInfo(Guid id)
     {
-        string userIdString = User.Claims.FirstOrDefault(c => c.Type == "id").Value;
-        if (!string.IsNullOrEmpty(userIdString) && Guid.TryParse(userIdString, out Guid userId))
+
+        var idClaim = HttpContext.Items["userId"];
+        Guid userId = default;
+        if (idClaim != null)
         {
-            try
+
+            if (Guid.TryParse(idClaim.ToString(), out var parsedId))
             {
-                var response = await _postService.GetPostInfo(userId, id);
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
+                userId = parsedId;
             }
         }
-        else
+
+        try
         {
-            return StatusCode(500, "Can't parse UserId from token claims");
+            var response = await _postService.GetPostInfo(userId, id);
+            return Ok(response);
+        }
+        catch (NotFoundException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return StatusCode(404, response);
+        }
+        catch (BadRequestException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return BadRequest(response);
+        }
+        catch (ForbiddenException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return StatusCode(403, response);
+        }
+        catch (Exception ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = "Internal Server Error"
+            };
+            return StatusCode(500, ex.Message);
         }
     }
 
@@ -110,22 +200,57 @@ public class PostController : ControllerBase
     [HttpPost("{postId}/like")]
     public async Task<ActionResult<Response>> AddLike(Guid postId)
     {
-        string userIdString = User.Claims.FirstOrDefault(c => c.Type == "id").Value;
-        if (!string.IsNullOrEmpty(userIdString) && Guid.TryParse(userIdString, out Guid userId))
+        var idClaim = HttpContext.Items["userId"];
+        Guid userId = default;
+        if (idClaim != null)
         {
-            try
+
+            if (Guid.TryParse(idClaim.ToString(), out var id))
             {
-                await _postService.AddLikeToPost(userId, postId);
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
+                userId = id;
             }
         }
-        else
+
+        try
         {
-            return StatusCode(500, "Can't parse UserId from token claims");
+            await _postService.AddLikeToPost(userId, postId);
+            return Ok();
+        }
+        catch (NotFoundException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return StatusCode(404, response);
+        }
+        catch (BadRequestException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return BadRequest(response);
+        }
+        catch (ForbiddenException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return StatusCode(403, response);
+        }
+        catch (Exception ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = "Internal Server Error"
+            };
+            return StatusCode(500, ex.Message);
         }
     }
     
@@ -133,22 +258,57 @@ public class PostController : ControllerBase
     [HttpDelete("{postId}/like")]
     public async Task<ActionResult<Response>> DeleteLike(Guid postId)
     {
-        string userIdString = User.Claims.FirstOrDefault(c => c.Type == "id").Value;
-        if (!string.IsNullOrEmpty(userIdString) && Guid.TryParse(userIdString, out Guid userId))
+        var idClaim = HttpContext.Items["userId"];
+        Guid userId = default;
+        if (idClaim != null)
         {
-            try
+
+            if (Guid.TryParse(idClaim.ToString(), out var id))
             {
-                await _postService.DeleteLikeFromPost(userId, postId);
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
+                userId = id;
             }
         }
-        else
+
+        try
         {
-            return StatusCode(500, "Can't parse UserId from token claims");
+            await _postService.DeleteLikeFromPost(userId, postId);
+            return Ok();
+        }
+        catch (NotFoundException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return StatusCode(404, response);
+        }
+        catch (BadRequestException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return BadRequest(response);
+        }
+        catch (ForbiddenException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return StatusCode(403, response);
+        }
+        catch (Exception ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = "Internal Server Error"
+            };
+            return StatusCode(500, ex.Message);
         }
     }
 }

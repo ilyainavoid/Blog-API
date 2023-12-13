@@ -1,6 +1,7 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Runtime.Intrinsics.Arm;
 using AutoMapper;
+using BlogApi.Exceptions;
 using BlogApi.Models.DTO;
 using BlogApi.Models.Entities;
 using BlogApi.Models.Enums;
@@ -36,6 +37,12 @@ public class CommunityService : ICommunityService
 
     public async Task<List<CommunityUserDto>> GetAllMyCommunities(Guid userId)
     {
+
+        if (userId == default)
+        {
+            throw new UnauthorizedException("User is unauthorized");
+        }
+
         var managedGroups = await _context.CommunitiesAdministrators.Where(admin => admin.UserId == userId).ToListAsync();
         var resultAsAdmin = _mapper.Map<List<CommunityUserDto>>(managedGroups);
         var subscriptions = await _context.CommunitiesSubscribers.Where(subscriber => subscriber.UserId == userId).ToListAsync();
@@ -66,9 +73,25 @@ public class CommunityService : ICommunityService
         return result;
     }
 
-    public async Task<PostPagedListDto> GetCommunityPosts(Guid communityId, List<Guid>? tagIds, PostSorting? sorting, int page, int size)
+    public async Task<PostPagedListDto> GetCommunityPosts(Guid communityId, Guid userId, List<Guid>? tagIds, PostSorting? sorting, int page, int size)
     {
-        var result = new PostPagedListDto();
+
+        if (userId == default)
+        {
+            throw new UnauthorizedException("User is unauthorized");
+        }
+
+        var community = await _context.Community.FirstOrDefaultAsync(c => c.Id == communityId);
+        if (community.IsClosed)
+        {
+            var role = await GetCommunityRole(communityId, userId);
+            if (role == "null")
+            {
+                throw new ForbiddenException($"User with id={userId} has no access to community with id={communityId}");
+            }
+        }
+
+
         var posts = new List<Post>();
 
         switch (sorting)
@@ -118,20 +141,34 @@ public class CommunityService : ICommunityService
         {
             posts = posts.Where(p => p.Tags.Any(tag => tagIds.Contains(tag.Id))).ToList();
         }
+
         var count = Math.Ceiling((double)posts.Count / size);
         var pagination = new PageInfoModel(size, (int)count, page);
         var postDtoList = _mapper.Map<List<PostDto>>(posts);
-        result.Posts = postDtoList;
-        result.Pagination = pagination;
+
+        int startIndex = (page - 1) * size;
+        postDtoList = postDtoList.Skip(startIndex).Take(size).ToList();
+
+        var result = new PostPagedListDto
+        {
+            Posts = postDtoList,
+            Pagination = pagination
+        };
+
         return result;
     }
     
     public async Task<Guid> CreatePostInCommunity(Guid communityId, Guid userId, CreatePostDto newPost)
     {
+        if (userId == default)
+        {
+            throw new UnauthorizedException("User is unauthorized");
+        }
+
         bool isCommunityExists = await _context.Community.AnyAsync(c => c.Id == communityId);
         if (!isCommunityExists)
         {
-            throw new Exception("Not found");
+            throw new NotFoundException($"Community with id = {communityId} is not found");
         }
         
         bool isAdmin =
@@ -139,14 +176,14 @@ public class CommunityService : ICommunityService
                 ca => ca.UserId == userId && ca.CommunityId == communityId);
         if (!isAdmin)
         {
-            throw new Exception("Forbidden");
+            throw new ForbiddenException("User cannot create a post");
         }
 
         bool validTags = newPost.Tags.All(tagId => _context.Tags.Any(dbTag => dbTag.Id == tagId));
 
         if (!validTags)
         {
-            throw new Exception("Not Found");
+            throw new NotFoundException("Tag or tags are not found");
         }
 
         List<Tag> newPostTags = await _context.Tags.Where(tag => newPost.Tags.Contains(tag.Id)).ToListAsync();
@@ -177,8 +214,13 @@ public class CommunityService : ICommunityService
         return post.Id;
     }
 
-    public async Task<string> GetCommunityRole(Guid communityId, Guid? userId)
+    public async Task<string> GetCommunityRole(Guid communityId, Guid userId)
     {
+        if (userId == default)
+        {
+            throw new UnauthorizedException("User is unauthorized");
+        }
+
         bool isCommunityExists = await _context.Community.AnyAsync(c => c.Id == communityId);
         if (isCommunityExists)
         {
@@ -197,16 +239,21 @@ public class CommunityService : ICommunityService
         }
         else
         {
-            throw new Exception($"Community with id={communityId.ToString()} does not exists");
+            throw new NotFoundException($"Community with id={communityId.ToString()} does not exists");
         }
     }
 
     public async Task Subscribe(Guid communityId, Guid userId)
     {
+        if (userId == default)
+        {
+            throw new UnauthorizedException("User is unauthorized");
+        }
+
         string role = await GetCommunityRole(communityId, userId);
         if (role != "null")
         {
-            throw new Exception($"User with id={userId} already subscribed to the community with id={communityId}");
+            throw new BadRequestException($"User with id={userId} already subscribed to the community with id={communityId}");
         }
         else
         {
@@ -222,10 +269,15 @@ public class CommunityService : ICommunityService
 
     public async Task Unsubscribe(Guid communityId, Guid userId)
     {
+        if (userId == default)
+        {
+            throw new UnauthorizedException("User is unauthorized");
+        }
+
         string role = await GetCommunityRole(communityId, userId);
         if (role != "Subscriber")
         {
-            throw new Exception($"User with id={userId} is not subscribed to the community with id={communityId}");
+            throw new BadRequestException($"User with id={userId} is not subscribed to the community with id={communityId}");
         }
         else
         {

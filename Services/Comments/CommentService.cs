@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using BlogApi.Exceptions;
 using BlogApi.Models.DTO;
 using BlogApi.Models.Entities;
 using BlogApi.Services.DbContexts;
@@ -18,18 +19,33 @@ public class CommentService : ICommentService
         _mapper = mapper;
     }
 
-    public async Task<List<CommentDto>> GetTree(Guid id)
+    public async Task<List<CommentDto>> GetTree(Guid id, string userIdString)
     {
         var parentComment = await _context.Comments.Include(c => c.ChildComments).FirstOrDefaultAsync(comment => comment.Id == id);
         //Check if exists
         if (parentComment == null)
         {
-            throw new Exception($"Comment with id={id} not found in  database");
+            throw new NotFoundException($"Comment with id={id} not found in  database");
         }
         //Check if is the comment is root comment
         if (parentComment.ParentCommentId != null)
         {
-            throw new Exception($"Comment with id={id} is not a root element");
+            throw new BadRequestException($"Comment with id={id} is not a root element");
+        }
+        //Check if has access
+        var post = await _context.Posts.FindAsync(parentComment.PostId);
+        if (post.CommunityId != null)
+        {
+            bool isSubscriber = _context.CommunitiesSubscribers.Any(cs =>
+                cs.CommunityId == post.CommunityId && cs.UserId.ToString() == userIdString);
+            
+            bool isAdmin = _context.CommunitiesAdministrators.Any(cs =>
+                cs.CommunityId == post.CommunityId && cs.UserId.ToString() == userIdString);
+
+            if (!isAdmin && !isSubscriber)
+            {
+                throw new ForbiddenException("User has no access to this comment");
+            }
         }
 
         //Get replies
@@ -75,7 +91,7 @@ public class CommentService : ICommentService
         bool postExists = await _context.Posts.AnyAsync(post => post.Id == id);
         if (!postExists)
         {
-            throw new Exception($"Post with id={id} is not found in database");
+            throw new NotFoundException($"Post with id={id} is not found in database");
         }
 
         //Check if post has a parent id specified
@@ -85,14 +101,14 @@ public class CommentService : ICommentService
             bool parentExists = await _context.Comments.AnyAsync(c => c.Id == commentModel.ParentId);
             if (!parentExists)
             {
-                throw new Exception($"Comment with id={commentModel.ParentId} is not found in database");
+                throw new NotFoundException($"Comment with id={commentModel.ParentId} is not found in database");
             }
             
             //Check if parent comment belongs to the same post
             var parentComment = await _context.Comments.FindAsync(commentModel.ParentId);
             if (id != parentComment.PostId)
             {
-                throw new Exception($"Incorrect combination between post with id={id} and parent comment with id={commentModel.ParentId}");
+                throw new BadRequestException($"Incorrect combination between post with id={id} and parent comment with id={commentModel.ParentId}");
             }
         }
         
@@ -111,7 +127,7 @@ public class CommentService : ICommentService
 
                 if (!hasAccess)
                 {
-                    throw new Exception("Forbidden"); //TO DO
+                    throw new ForbiddenException("Forbidden");
                 }
             }
 
@@ -145,13 +161,13 @@ public class CommentService : ICommentService
             //Check if comment exists
             if (comment == null)
             {
-                throw new Exception($"Comment with id={id} is not found in database");
+                throw new NotFoundException($"Comment with id={id} is not found in database");
             }
             
             //Check if user has access to the comment
             if (comment.AuthorId != userId)
             {
-                throw new Exception("Forbidden");
+                throw new ForbiddenException("Forbidden");
             }
             
             //Update data of comment
@@ -172,18 +188,13 @@ public class CommentService : ICommentService
             //Check if comment exists
             if (comment == null)
             {
-                throw new Exception($"Comment with id={id} is not found in database");
+                throw new NotFoundException($"Comment with id={id} is not found in database");
             }
             
             //Check if user has access to the comment
             if (comment.AuthorId != userId)
             {
-                throw new Exception("Forbidden");
-            }
-
-            if (comment.Content == string.Empty)
-            {
-                throw new Exception("Cannot delete deleted comment");
+                throw new ForbiddenException("Forbidden");
             }
 
             //If there aren't any replies

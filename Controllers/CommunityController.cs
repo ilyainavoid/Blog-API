@@ -1,4 +1,5 @@
-﻿using BlogApi.Models.DTO;
+﻿using BlogApi.Exceptions;
+using BlogApi.Models.DTO;
 using BlogApi.Models.Entities;
 using BlogApi.Models.Enums;
 using BlogApi.Services.Communities;
@@ -37,25 +38,51 @@ public class CommunityController : ControllerBase
     [HttpGet("my")]
     public async Task<ActionResult<List<CommunityUserDto>>> GetMyCommunities()
     {
-        var idClaim = HttpContext.User.FindFirst("id");
-        var response = new List<CommunityUserDto>();
-        if (idClaim != null) {
+        var idClaim = HttpContext.Items["userId"];
+        Guid userId = default;
+        if (idClaim != null)
+        {
 
-            if (Guid.TryParse(idClaim.Value, out var userId))
+            if (Guid.TryParse(idClaim.ToString(), out var id))
             {
-                try
-                {
-                    response = await _communityService.GetAllMyCommunities(userId);
-                }
-                catch(Exception ex)
-                {
-                    return StatusCode(500, "smth went wrong");
-                }
+                userId = id;
             }
         }
-        return Ok(response);
+
+        try
+        {
+            var response = await _communityService.GetAllMyCommunities(userId);
+            return Ok(response);
+        }
+        catch (NotFoundException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return StatusCode(404, response);
+        }
+        catch (BadRequestException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return BadRequest(response);
+        }
+        catch (Exception ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = "Internal Server Error"
+            };
+            return StatusCode(500, ex.Message);
+        }
     }
-    
+
     [HttpGet("{id}")]
     public async Task<ActionResult<CommunityFullDto>> GetCommunityInfo(Guid id)
     {
@@ -64,8 +91,41 @@ public class CommunityController : ControllerBase
             var response = await _communityService.GetCommunityInfo(id);
             return Ok(response);
         }
-        catch (Exception ex) {
-            return StatusCode(500, "Went wrong");
+        catch (NotFoundException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return StatusCode(404, response);
+        }
+        catch (BadRequestException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return BadRequest(response);
+        }
+        catch (ForbiddenException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return StatusCode(403, response);
+        }
+        catch (Exception ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = "Internal Server Error"
+            };
+            return StatusCode(500, ex.Message);
         }
     }
 
@@ -76,14 +136,58 @@ public class CommunityController : ControllerBase
         var sorting = parametersCommunity.Sorting;
         var page = parametersCommunity.CurrentPage;
         var size = parametersCommunity.PageSize;
+
+        var idClaim = HttpContext.Items["userId"];
+        Guid userId = default;
+        if (idClaim != null)
+        {
+
+            if (Guid.TryParse(idClaim.ToString(), out var parsedId))
+            {
+                userId = parsedId;
+            }
+        }
+
         try
         {
-            var response = await _communityService.GetCommunityPosts(id, tagIds, sorting, page, size);
+            var response = await _communityService.GetCommunityPosts(id, userId, tagIds, sorting, page, size);
             return Ok(response);
+        }
+        catch (NotFoundException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return StatusCode(404, response);
+        }
+        catch (BadRequestException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return BadRequest(response);
+        }
+        catch (ForbiddenException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return StatusCode(403, response);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex);
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = "Internal Server Error"
+            };
+            return StatusCode(500, ex.Message);
         }
     }
 
@@ -91,28 +195,62 @@ public class CommunityController : ControllerBase
     [HttpPost("{id}/post")]
     public async Task<ActionResult<Guid>> CreatePostInCommunity(Guid id, CreatePostDto model)
     {
-        Guid? userId = (Guid)HttpContext.Items["userId"];
+        var idClaim = HttpContext.Items["userId"];
+        Guid userId = default;
+        if (idClaim != null)
+        {
+
+            if (Guid.TryParse(idClaim.ToString(), out var parsedId))
+            {
+                userId = parsedId;
+            }
+        }
 
         if (!ModelState.IsValid)
         {
             return BadRequest();
         }
 
-        if (userId != null)
+        try
         {
-            try
-            {
-                var response = await _communityService.CreatePostInCommunity(id, userId.Value, model);
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
+            var response = await _communityService.CreatePostInCommunity(id, userId, model);
+            return Ok(response);
         }
-        else
+        catch (NotFoundException ex)
         {
-            return Unauthorized();
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return StatusCode(404, response);
+        }
+        catch (BadRequestException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return BadRequest(response);
+        }
+        catch (ForbiddenException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return StatusCode(403, response);
+        }
+        catch (Exception ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = "Internal Server Error"
+            };
+            return StatusCode(500, ex.Message);
         }
     }
     
@@ -121,22 +259,57 @@ public class CommunityController : ControllerBase
     
     public async Task<ActionResult<string>> GetCommunityRole(Guid id)
     {
-        Guid? userId = (Guid)HttpContext.Items["userId"];
-        if (userId != null)
+        var idClaim = HttpContext.Items["userId"];
+        Guid userId = default;
+        if (idClaim != null)
         {
-            try
+
+            if (Guid.TryParse(idClaim.ToString(), out var parsedId))
             {
-                var response = await _communityService.GetCommunityRole(id, userId);
-                return Ok(response);
-            }
-            catch (Exception exception)
-            {
-                return StatusCode(500, exception.Message);
+                userId = parsedId;
             }
         }
-        else
+
+        try
         {
-            return Unauthorized();
+            var response = await _communityService.GetCommunityRole(id, userId);
+            return Ok(response);
+        }
+        catch (NotFoundException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return StatusCode(404, response);
+        }
+        catch (BadRequestException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return BadRequest(response);
+        }
+        catch (ForbiddenException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return StatusCode(403, response);
+        }
+        catch (Exception ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = "Internal Server Error"
+            };
+            return StatusCode(500, ex.Message);
         }
     }
 
@@ -144,22 +317,57 @@ public class CommunityController : ControllerBase
     [HttpPost("{id}/subscribe")]
     public async Task<ActionResult> Subscribe(Guid id)
     {
-        Guid? userId = (Guid)HttpContext.Items["userId"];
-        if (userId != null)
+        var idClaim = HttpContext.Items["userId"];
+        Guid userId = default;
+        if (idClaim != null)
         {
-            try
+
+            if (Guid.TryParse(idClaim.ToString(), out var parsedId))
             {
-                await _communityService.Subscribe(id, userId.Value);
-                return Ok();
-            }
-            catch (Exception exception)
-            {
-                return StatusCode(500, exception.Message);
+                userId = parsedId;
             }
         }
-        else
+
+        try
         {
-            return Unauthorized();
+            await _communityService.Subscribe(id, userId);
+            return Ok();
+        }
+        catch (NotFoundException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return StatusCode(404, response);
+        }
+        catch (BadRequestException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return BadRequest(response);
+        }
+        catch (ForbiddenException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return StatusCode(403, response);
+        }
+        catch (Exception ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = "Internal Server Error"
+            };
+            return StatusCode(500, ex.Message);
         }
     }
     
@@ -167,22 +375,57 @@ public class CommunityController : ControllerBase
     [HttpDelete("{id}/unsubscribe")]
     public async Task<ActionResult> Unsubscribe(Guid id)
     {
-        Guid? userId = (Guid)HttpContext.Items["userId"];
-        if (userId != null)
+        var idClaim = HttpContext.Items["userId"];
+        Guid userId = default;
+        if (idClaim != null)
         {
-            try
+
+            if (Guid.TryParse(idClaim.ToString(), out var parsedId))
             {
-                await _communityService.Unsubscribe(id, userId.Value);
-                return Ok();
-            }
-            catch (Exception exception)
-            {
-                return StatusCode(500, exception.Message);
+                userId = parsedId;
             }
         }
-        else
+
+        try
         {
-            return Unauthorized();
+            await _communityService.Unsubscribe(id, userId);
+            return Ok();
+        }
+        catch (NotFoundException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return StatusCode(404, response);
+        }
+        catch (BadRequestException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return BadRequest(response);
+        }
+        catch (ForbiddenException ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = ex.Message
+            };
+            return StatusCode(403, response);
+        }
+        catch (Exception ex)
+        {
+            var response = new Response
+            {
+                Status = "Error occured",
+                Message = "Internal Server Error"
+            };
+            return StatusCode(500, ex.Message);
         }
     }
 }
